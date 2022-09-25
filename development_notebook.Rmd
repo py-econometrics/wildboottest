@@ -217,6 +217,7 @@ make all objects from `preprocess()` available in the global namespace
 
 ```{r, warning = FALSE, message = FALSE}
 res <- lapply(names(preprocess), function(x) assign(x, preprocess[[x]], envir = .GlobalEnv))
+bootcluster <- as.vector(bootcluster)
 ```
 
 ## pass all values to python
@@ -231,9 +232,9 @@ X = np.array(r.X)
 y = np.array(r.Y)
 #clustid_df = r.clustid_df
 bootstrap_type = r.bootstrap_type
-N_G_bootcluser = r.N_G_bootcluster
-bootcluster = np.array(np.transpose(r.bootcluster))
-R = r.R
+N_G_bootcluster = r.N_G_bootcluster
+bootcluster = np.array(r.bootcluster)
+R = np.array(r.R0)
 
 
 type(X)
@@ -241,3 +242,6 @@ X[0:10, 0:10]
 
 ```
 develop ... 
+
+
+
