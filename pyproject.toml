@@ -7,6 +7,7 @@ name = "wildboottest"
 version = "0.0.1"
 authors = [
   { name="Alexander Fischer", email="alexander-fischer1801@t-online.de" },
+  {name="Aleksandr Michuda", email="amichuda@gmail.com"}
 ]
 description = "Wild Cluster Bootstrap Inference for Linear Models in Python"
 readme = "README.md"
