@@ -1,10 +1,13 @@
 import numpy as np
 import pandas as pd
 
-def boot_algo3(X, y, bootstrap_type, N_G_bootcluster, R, impose_null, clusters): 
+def boot_algo3(X, y, bootstrap_type, N_G_bootcluster, R, impose_null, clusters, B, ssc, pval_type): 
 
   assert bootstrap_type in ['11', '13', '31', '33']
+  assert impose_null in [True, False]
+  assert pval_type in ['two-tailed', 'equal-tailed', '>', '<']
 
+  
   if isinstance(X, pd.DataFrame):
     X = X.values
   if isinstance(y, pd.DataFrame):
@@ -24,7 +27,9 @@ def boot_algo3(X, y, bootstrap_type, N_G_bootcluster, R, impose_null, clusters):
 
   #TODO: assume pandas dataframe and then use pd.Categorical?
   #cluster <- as.factor(cluster_df[,1])
-  G  = N_G_bootcluster 
+  # N_G_bootcluster == G for oneway clustering
+  N_G_bootcluster = len(bootclustid)
+  G  = len(clustid) 
 
   #TODO: Might need to be changed
   k = R.shape[0]
@@ -46,6 +51,7 @@ def boot_algo3(X, y, bootstrap_type, N_G_bootcluster, R, impose_null, clusters):
   n_draws = (N_G_bootcluster * (B+1))
   v = np.random.choice([-1,1], int(n_draws))
   v = v.reshape((N_G_bootcluster, int(B + 1)))
+  v[:,0] = 1
 
   X_list = []
   y_list = []
@@ -59,8 +65,8 @@ def boot_algo3(X, y, bootstrap_type, N_G_bootcluster, R, impose_null, clusters):
   for g in bootclustid:
     
     # split X and Y by (boot)cluster
-    X_g = X[np.where(bootcluster == g, 1, 0),:]
-    Y_g = y[np.where(bootcluster == g, 1, 0),:]
+    X_g = X[np.where(bootcluster == g)]
+    Y_g = y[np.where(bootcluster == g)]
     tXgXg = np.transpose(X_g) @ X_g
     tXgyg = np.transpose(X_g) @ Y_g
     X_list.append(X_g)
@@ -80,7 +86,7 @@ def boot_algo3(X, y, bootstrap_type, N_G_bootcluster, R, impose_null, clusters):
   beta_1g_tilde = None
   inv_tXX_tXgXg = None
   
-  #np.matmul(tXXinv, tXy).shape
+  #tXXinv @ tXy
   
   
   # pre-compute required objects for different bootstrap types: 
@@ -108,8 +114,8 @@ def boot_algo3(X, y, bootstrap_type, N_G_bootcluster, R, impose_null, clusters):
   elif(bootstrap_type in ["WCR1x"]): 
       
     beta_hat = tXXinv @ tXy
-    A = np.linalg.inv(np.transpose(R) @ tXXinv @ R)
-    beta_tilde = tXXinv @ R @ A @ (R @ beta_hat - 0)
+    A = 1 / (np.transpose(R) @ tXXinv @ R)
+    beta_tilde = beta_hat - tXXinv @ R / A * (R @ beta_hat - 0)
     
   elif(bootstrap_type in "WCU1x): 
     
@@ -133,9 +139,9 @@ def boot_algo3(X, y, bootstrap_type, N_G_bootcluster, R, impose_null, clusters):
         beta_g_hat.append(np.linalg.pinv(tXX - tXgXg_list[ix]) @ (tXy - tXgyg_list[ix]))
   # precomputed required objects for CRV-types
   
-  scores_list = get_scores(bootstrap_type, G, tXgyg, tXgXg, beta_tilde)
-      
-    
+  scores_list = get_scores(bootstrap_type, N_G_bootcluster, tXgyg_list, tXgXg_list, beta_tilde):
+  scores_mat = np.transpose(np.array(scores_list)) # dim k x N_G_bootcluster
+  
   if crv_type in ["crv1"]:
     # Ag no longer needed, should be deleted from R code!
     Ag = None
@@ -146,39 +152,74 @@ def boot_algo3(X, y, bootstrap_type, N_G_bootcluster, R, impose_null, clusters):
         np.linalg.pinv(tXX - tXgXg_list[ix])
     
   # Calculate the bootstrap numerator
-  Cg = np.matmul(np.matmul(R, tXXinv), np.array(scores_list))
-  numer = np.matmul(Cg, v)
+  Cg = R @ tXXinv @ scores_mat 
+  numer = Cg @ v
   
   if crv_type == "crv1":
     
     H = np.zeros((G, G))
     
+    # numba optimization possible? 
     for ixg, g in enumerate(bootclustid):
       for ixh, h in enumerate(bootclustid):
-        H[ixg,ixh] = R @ tXXinv @ tXgXg[ixg] @ tXXinv @ scores_list[ixh]
+        # can be improved by replacing list calls with matrices; 
+        H[ixg,ixh] = R @ tXXinv @ tXgXg_list[ixg] @ tXXinv @ scores_list[ixh]
   
     # now compute denominator
-    Zg = np.array(G)
-    for ixg, g in enumerate(bootclustid):
-      vH = 0
-      for ixh, h in enumerate(bootclustid):
-        vH = vH + v(ixh,b) * H(ixg,ixh)
-      Zg[ixg] = Cg[ixg] * v[ixg,b] - vH
+    # numba / cython / c++ optimization possible? Porting this part from 
+    # R to c++ gives good speed improvements
+    
+    denom = np.zeros(B+1)
+    
+    for b in range(0, B+1):
+      Zg = np.zeros(G)
+      for ixg, g in enumerate(bootclustid):
+        vH = 0
+        for ixh, h in enumerate(bootclustid):
+          vH = vH + v[ixh,b] * H[ixg,ixh]
+        Zg[ixg] = Cg[ixg] * v[ixg,b] - vH
       
-    denom = ssc * np.sum(np.power(Zg,2))
+      denom[b] = ssc * np.sum(np.power(Zg,2))
+  
+  elif crv_type == "crv3":
+    
+    None
     
   else: 
+    
     None
     
   # compute the t-statistics
-  t_stat = numer / denom
+  t_boot = numer / np.sqrt(denom)
+  t_boot = t_boot[1:(B+1)] # drop first element - might be useful for comp. of
+  # covariance matrices
   
-  # compute the original t-stat
+  # compute the non-bootstrapped vcov
   
+  if(crv_type == "crv1"):
+    
+    meat = np.zeros((k,k))
+    for ixg, g in enumerate(bootclustid):
+      score = np.transpose(X_list[g]) @ (y_list[g] - X_list[g] @ beta_hat)
+      meat = meat + np.outer(score, score)
+      
+    vcov = tXXinv @ meat @ tXXinv
+    
+  elif crv_type == "crv3":
+    
+    None
+    
+  # compute the non-bootstrap t-stat
   
-  # compute the bootstrapped p-value
+  se = np.sqrt(ssc * R @ vcov @ np.transpose(R))
+  t_stats = beta_hat / se
+  t_stat = t_stats[np.where(R == 1)]
   
+  # compute the p-value
+  #pval = get_pvalue(t_stat, t_boot, pval_type)
+  pval = np.mean(np.abs(t_stat) < abs(t_boot))
 
+  return pval
   
   
       
