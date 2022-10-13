@@ -6,5 +6,5 @@ Julia's [WildBootTests.jl](https://github.com/droodman/WildBootTests.jl)
 as a post-estimation command for [statsmodels](https://github.com/statsmodels/statsmodels) and 
 [linearmodels](https://github.com/bashtage/linearmodels). 
 
-If you'd like to cooperate, either send me an 
+If you'd like to cooperate, either send us an 
 [email](alexander-fischer1801@t-online.de) or comment in the issues section!
