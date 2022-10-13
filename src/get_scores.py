@@ -1,5 +1,4 @@
-def get_scores(bootstrap_type, N_G_bootcluster, tXgyg_list, tXgXg_list, 
-beta_tilde, beta_hat, beta_1g_tilde, beta_g_hat):
+def get_scores(bootstrap_type, N_G_bootcluster, tXgyg_list, tXgXg_list, beta_tilde, beta_hat, beta_1g_tilde, beta_g_hat):
   
   """
   Compute score vectors for all clusters
