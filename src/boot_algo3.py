@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from numba import jit
 
 class Wildboottest: 
   
@@ -203,21 +204,25 @@ class Wildboottest:
         # now compute denominator
         # numba / cython / c++ optimization possible? Porting this part from 
         # R to c++ gives good speed improvements
-    
-        denom = np.zeros(self.B + 1)
-    
-        for b in range(0, self.B+1):
-          Zg = np.zeros(self.G)
-          for ixg, g in enumerate(self.bootclustid):
-            vH = 0
-            for ixh, h in enumerate(self.bootclustid):
-              vH = vH + self.v[ixh,b] * H[ixg,ixh]
-            Zg[ixg] = self.Cg[ixg] * self.v[ixg,b] - vH
+        @jit
+        def compute_denom(Cg, H, bootclustid, B, G, v, ssc):
           
-          # todo: ssc
-          denom[b] = self.ssc * np.sum(np.power(Zg,2))
+          denom = np.zeros(B + 1)
+      
+          for b in range(0, B+1):
+            Zg = np.zeros(G)
+            for ixg, g in enumerate(bootclustid):
+              vH = 0
+              for ixh, h in enumerate(bootclustid):
+                vH = vH + v[ixh,b] * H[ixg,ixh]
+              Zg[ixg] = Cg[ixg] * v[ixg,b] - vH
+            
+            # todo: ssc
+            denom[b] = ssc * np.sum(np.power(Zg,2))
+            
+          return denom
           
-        self.denom = denom
+        self.denom = compute_denom(self.Cg, H, self.bootclustid, self.B, self.G, self.v, self.ssc)
       
   def get_tboot(self):
     
@@ -254,17 +259,5 @@ class Wildboottest:
       self.pvalue = np.mean(self.t_stat < self.t_boot)
     else: 
       self.pvalue = np.mean(self.t_stat > self.t_boot)
-  
-
-
-
-
-
-  
-  
-  
-  
-  
-  
 
   
