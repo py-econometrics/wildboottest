@@ -1,9 +1,27 @@
 import numpy as np
 import pandas as pd
 
-class wildboottest: 
+class Wildboottest: 
   
-  def __init__(self, X, Y, clusters):
+  '''
+  Create an object of Wildboottest and get p-value by successively applying
+  methods in the following way: 
+    
+  wb = Wildboottest(X = X, Y = y, clusters = clusters, R = R, B = B)
+  wb.get_scores(bootstrap_type = "11", impose_null = True)
+  wb.get_numer()
+  wb.get_denom()
+  wb.get_tboot()
+  wb.get_vcov()
+  wb.get_tstat()
+  wb.get_pvalue()  
+  
+  Later we can replace X, Y, clusters, R with an object estimated via 
+  statsmodels or linearmodels and a "param" values (as in fwildclusterboot::boottest())
+  
+  '''
+  
+  def __init__(self, X, Y, clusters, R, B, seed = None):
       
       "Initialize the wildboottest class"
       #assert bootstrap_type in ['11', '13', '31', '33']
@@ -14,27 +32,33 @@ class wildboottest:
       if isinstance(y, pd.DataFrame):
         self.y = y.values
       if isinstance(clusters, pd.DataFrame):
-        self.clustid = clusters.unique()
+        clustid = clusters.unique()
         self.clusters = clusters.values
       if isinstance(bootcluster, pd.DataFrame):
-        self.bootclustid = bootcluster.unique()
+        bootclustid = bootcluster.unique()
         self.bootcluster = bootcluster.values
       else:
-        self.X = X
-        self.Y = Y
-        self.clustid = np.unique(clusters)
-        self.bootclustid = np.unique(bootcluster)
+        clustid = np.unique(clusters)
+        bootclustid = np.unique(bootcluster)
+        
+      if isinstance(seed, int):
+        np.random.seed(seed)
 
       self.N_G_bootcluster = len(bootclustid)
       self.G  = len(clustid)
 
-      self.k = R.shape[0]
-
+      k = R.shape[0]
+      self.k = k 
+      self.B = B
+      self.X = X
+      self.R = R
+      
       n_draws = (N_G_bootcluster * (B+1))
       v = np.random.choice([-1,1], int(n_draws))
       v = v.reshape((N_G_bootcluster, int(B + 1)))
       v[:,0] = 1
       self.v = v
+      self.ssc = 1
       
       X_list = []
       y_list = []
@@ -59,6 +83,8 @@ class wildboottest:
         tXX = tXX + tXgXg
         tXy = tXy + tXgyg
       
+      self.clustid = clustid
+      self.bootclustid = bootclustid
       self.X_list = X_list
       self.Y_list = y_list
       self.tXgXg_list = tXgXg_list
@@ -66,9 +92,10 @@ class wildboottest:
       self.tXX = tXX
       self.tXy = tXy
         
-      self.XXinv = np.linalg.inv(tXX)
+      tXXinv = np.linalg.inv(tXX)
       self.RtXXinv = np.matmul(R, tXXinv)
-    
+      self.tXXinv = tXXinv 
+      
   def get_scores(self, bootstrap_type, impose_null):
     
       if bootstrap_type[0:1] == '1':
@@ -81,80 +108,78 @@ class wildboottest:
       if impose_null == True:
         self.bootstrap_type = "WCR" + bootstrap_type_x
       else:
-       self.bootstrap_type = "WCU" + bootstrap_type_x
+        self.bootstrap_type = "WCU" + bootstrap_type_x
     
-        if(bootstrap_type in ["WCR3x", "WCU3x"]: 
-      
-      
       # precompute required objects for computing scores & vcov's
-      if(bootstrap_type in ["WCR3x", "WCU3x"]: 
+      if self.bootstrap_type in ["WCR3x", "WCU3x"]: 
           
-        X1 = X[:,np.where(R == 0)]
+        X = self.X
+        X1 = X[:,np.where(self.R == 0)]
         X1_list = []
         tX1gX1g = []
         tX1gyg = []
         tXgX1g = []
-        tX1X1 = np.zeros((k-1, k-1))
-        tX1y = np.array(k-1)
+        tX1X1 = np.zeros((self.k-1, self.k-1))
+        tX1y = np.array(self.k-1)
           
-        for ix, g in enumerate(bootclustid):
-            X1_list.append(np.where(X1[bootcluster == g, 1, 0),:])
-            tX1gX1g.append(np.transpose(X1_list[ix]) @ X1_list[ix])
-            tX1gyg.append(np.transpose(X1_list[ix]) @ y_list[ix])
-            tXgX1g.append(np.transpose(X_list[ix]) @  X1_list[ix])
-            tX1X1 = tX1X1 + tX1gX1g[ix]
-            tX1y = tX1y + tX1gyg[ix]
+        for ix, g in enumerate(self.bootclustid):
+          X1_list.append(X1[np.where(bootcluster == g)])
+          tX1gX1g.append(np.transpose(X1_list[ix]) @ X1_list[ix])
+          tX1gyg.append(np.transpose(X1_list[ix]) @ y_list[ix])
+          tXgX1g.append(np.transpose(X_list[ix]) @  X1_list[ix])
+          tX1X1 = tX1X1 + tX1gX1g[ix]
+          tX1y = tX1y + tX1gyg[ix]
             
         self.tX1X1inv = np.invert(tX1X1)
-      
-        if bootstrap_type in ["WCR1x"]: 
-            
-            self.beta_hat = tXXinv @ tXy
-            A = 1 / (np.transpose(R) @ tXXinv @ R)
-            beta_tilde = beta_hat - tXXinv @ R / A * (R @ beta_hat - 0)
-            beta = beta_tilde
-            B = tXgXg_list
-            
-        elif bootstrap_type in ["WCU1x"]: 
-            
-            beta_hat = np.matmul(tXXinv, tXy)
-            self.beta_hat = beta_hat
-            beta = beta_hat 
-            B = tXgXg_list
         
-      elif bootstrap_type in ["WCR3x"]:
-        
-        inv_tXX_tXgXg = []
-        beta_1g_tilde = []
-        
-        for ix, g in enumerate(bootclustid):
-          # use generalized inverse 
-          inv_tXX_tXgXg.append(np.linalg.pinv(tXX - tXgXg_list[ix]))
-          beta_1_tilde = np.linalg.pinv(tX1X1 - tX1gX1g_list[ix]) @ (tX1y - tX1gyg_list[ix])
-          beta_1g_tilde.append()
-        
-        beta = beta_1g_tilde
-        B = tXgX1g_list
+        if self.bootstrap_type in ["WCR3x"]:
           
-      elif bootstrap_type in ["WCU3x"]: 
+          inv_tXX_tXgXg = []
+          beta_1g_tilde = []
           
+          for ix, g in enumerate(self.bootclustid):
+            # use generalized inverse 
+            inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
+            beta_1_tilde = np.linalg.pinv(self.tX1X1 - self.tX1gX1g_list[ix]) @ (self.tX1y - self.tX1gyg_list[ix])
+            beta_1g_tilde.append()
+          
+          beta = beta_1g_tilde
+          M = self.tXgX1g_list
+            
+        elif self.bootstrap_type in ["WCU3x"]: 
+            
           beta_g_hat = []
-          for ix, g in enumerate(bootclustid):
+          for ix, g in enumerate(self.bootclustid):
             beta_g_hat.append(np.linalg.pinv(tXX - tXgXg_list[ix]) @ (tXy - tXgyg_list[ix]))
-
+  
           beta = beta_g_hat
-          B = tXgXg_list
+          M = tXgXg_list
+          
+      elif self.bootstrap_type in ["WCR1x"]: 
+            
+        self.beta_hat = self.tXXinv @ self.tXy
+        A = 1 / (np.transpose(self.R) @ self.tXXinv @ self.R)
+        beta_tilde = self.beta_hat - self.tXXinv @ self.R / A * (self.R @ self.beta_hat - 0)
+        beta = beta_tilde
+        M = self.tXgXg_list
+          
+      elif self.bootstrap_type in ["WCU1x"]: 
+            
+        beta_hat = np.matmul(self.tXXinv, self.tXy)
+        self.beta_hat = beta_hat
+        beta = beta_hat 
+        M = tXgXg_list
 
       # compute the list of scores
-      scores_list[]
-      for g in range(0,self.N_G_bootcluster):
+      scores_list = []
+      for ix, g in enumerate(self.bootclustid):
           # A - B x c
-          if isinstance(B, List):
-            scores_list.append(self.tXgyg_list[g] - B[g] @ beta)
-          else 
-            scores_list.append(self.tXgyg_list[g] - B @ beta)
+        if isinstance(M, list):
+          scores_list.append(self.tXgyg_list[ix] - M[ix] @ beta)
+        else: 
+          scores_list.append(self.tXgyg_list[ix] - M @ beta)
 
-      self.scores_mat = np.transpose(np.array(scores_list))
+      self.scores_mat = np.transpose(np.array(scores_list)) # k x G 
       
   
   def get_numer(self):
@@ -163,301 +188,77 @@ class wildboottest:
       self.Cg = self.R @ self.tXXinv @ self.scores_mat 
       self.numer = self.Cg @ self.v
     
-  def get_denom(self, crv_type, ssc):
+  def get_denom(self):
     
-      if crv_type == "crv1":
+      if self.crv_type == "crv1":
     
         H = np.zeros((self.G, self.G))
     
-          # numba optimization possible? 
-          for ixg, g in enumerate(self.bootclustid):
-            for ixh, h in enumerate(self.bootclustid):
-              # can be improved by replacing list calls with matrices; 
-              H[ixg,ixh] = self.R @ self.tXXinv @ self.tXgXg_list[ixg] @ self.tXXinv @ self.scores_list[ixh]
+        # numba optimization possible? 
+        for ixg, g in enumerate(self.bootclustid):
+          for ixh, h in enumerate(self.bootclustid):
+            # can be improved by replacing list calls with matrices; 
+            H[ixg,ixh] = self.R @ self.tXXinv @ self.tXgXg_list[ixg] @ self.tXXinv @ self.scores_mat[:,ixh]
   
         # now compute denominator
         # numba / cython / c++ optimization possible? Porting this part from 
         # R to c++ gives good speed improvements
     
-        denom = np.zeros(self.B+1)
+        denom = np.zeros(self.B + 1)
     
         for b in range(0, self.B+1):
           Zg = np.zeros(self.G)
           for ixg, g in enumerate(self.bootclustid):
             vH = 0
             for ixh, h in enumerate(self.bootclustid):
-              vH = vH + v[ixh,b] * H[ixg,ixh]
+              vH = vH + self.v[ixh,b] * H[ixg,ixh]
             Zg[ixg] = self.Cg[ixg] * self.v[ixg,b] - vH
           
+          # todo: ssc
           denom[b] = self.ssc * np.sum(np.power(Zg,2))
           
         self.denom = denom
       
   def get_tboot(self):
     
-      t_boot = numer / np.sqrt(denom)
+      t_boot = self.numer / np.sqrt(self.denom)
       self.t_boot = t_boot[1:(B+1)] # drop first element - might be useful for comp. of
 
-      
-  def get_vcov(self, crv_type):
+  def get_vcov(self):
     
-      if crv_type == "crv1":
+    if self.crv_type == "crv1":
           
-          meat = np.zeros((self.k,self.k))
-          for ixg, g in enumerate(self.bootclustid):
-            score = np.transpose(self.X_list[ixg]) @ (self.y_list[ixg] - self.X_list[ixg] @ self.beta_hat)
-            meat = meat + np.outer(score, score)
+      meat = np.zeros((self.k,self.k))
+      for ixg, g in enumerate(self.bootclustid):
+        score = np.transpose(self.X_list[ixg]) @ (self.Y_list[ixg] - self.X_list[ixg] @ self.beta_hat)
+        meat = meat + np.outer(score, score)
       
-          self.vcov = self.tXXinv @ meat @ self.tXXinv
+      self.vcov = self.tXXinv @ meat @ self.tXXinv
     
         
-   def t_stat(self, ssc):
+  def get_tstat(self):
         
-      se = np.sqrt(ssc * self.R @ self.vcov @ np.transpose(self.R))
-      t_stats = self.beta_hat / se
-      self.t_stat = t_stats[np.where(self.R == 1)]
+    se = np.sqrt(self.ssc * self.R @ self.vcov @ np.transpose(self.R))
+    t_stats = self.beta_hat / se
+    self.t_stat = t_stats[np.where(self.R == 1)]
 
   def get_pvalue(self):
     
-      if pval_type == "two-tailed":
-          self.pvalue = np.mean(np.abs(t_stat) < abs(t_boot))
-      elif pval_type == "equal-tailed":
-        pl = np.mean(t_stat < t_boot)
-        ph = np.mean(t_stat > t_boot)
-        self.pvalue = 2 * min(pl, ph)
-      elif pval_type == ">":
-        self.pvalue = np.mean(t_stat < t_boot)
-      else 
-        self.pvalue = np.mean(t_stat > t_boot)
+    if pval_type == "two-tailed":
+      self.pvalue = np.mean(np.abs(self.t_stat) < abs(self.t_boot))
+    elif pval_type == "equal-tailed":
+      pl = np.mean(self.t_stat < self.t_boot)
+      ph = np.mean(self.t_stat > self.t_boot)
+      self.pvalue = 2 * min(pl, ph)
+    elif pval_type == ">":
+      self.pvalue = np.mean(self.t_stat < self.t_boot)
+    else: 
+      self.pvalue = np.mean(self.t_stat > self.t_boot)
   
 
 
 
 
-def boot_algo3(X, y, bootstrap_type, N_G_bootcluster, R, impose_null, clusters, B, ssc, pval_type): 
-
-  assert bootstrap_type in ['11', '13', '31', '33']
-  assert impose_null in [True, False]
-  assert pval_type in ['two-tailed', 'equal-tailed', '>', '<']
-
-  
-  if isinstance(X, pd.DataFrame):
-    X = X.values
-  if isinstance(y, pd.DataFrame):
-    y = y.values
-  if isinstance(clusters, pd.DataFrame):
-    clustid = clusters.unique()
-    clusters = clusters.values
-  if isinstance(bootcluster, pd.DataFrame):
-    bootclustid = bootcluster.unique()
-    bootcluster = bootcluster.values
-  else:
-    clustid = np.unique(clusters)
-    bootclustid = np.unique(bootcluster)
-
-
-
-  #TODO: what is fe supposed to be? 
-  #fe <- preprocessed_object$fe
-
-  #TODO: assume pandas dataframe and then use pd.Categorical?
-  #cluster <- as.factor(cluster_df[,1])
-  # N_G_bootcluster == G for oneway clustering
-  N_G_bootcluster = len(bootclustid)
-  G  = len(clustid) 
-
-  #TODO: Might need to be changed
-  k = R.shape[0]
-
-  if bootstrap_type[0:1] == '1':
-    crv_type = "crv1"
-  elif bootstrap_type[0:1] == '3': 
-    crv_type = "crv3"
-
-  bootstrap_type_x = bootstrap_type[1:2] + 'x'
-
-  if impose_null == True:
-    bootstrap_type = "WCR" + bootstrap_type_x
-  else: 
-    bootstrap_type = "WCU" + bootstrap_type_x
-
-  # write dedicated get_weights() function
-  # TODO: add get_weights here, once merged
-  n_draws = (N_G_bootcluster * (B+1))
-  v = np.random.choice([-1,1], int(n_draws))
-  v = v.reshape((N_G_bootcluster, int(B + 1)))
-  v[:,0] = 1
-
-  X_list = []
-  y_list = []
-  tXgXg_list = []
-  tXgyg_list = []
-  tXX = np.zeros((k, k))
-  tXy = np.zeros(k)
-  
-  #all_clusters = np.unique(bootcluster)
-  
-  for g in bootclustid:
-    
-    # split X and Y by (boot)cluster
-    X_g = X[np.where(bootcluster == g)]
-    Y_g = y[np.where(bootcluster == g)]
-    tXgXg = np.transpose(X_g) @ X_g
-    tXgyg = np.transpose(X_g) @ Y_g
-    X_list.append(X_g)
-    y_list.append(Y_g)
-    tXgXg_list.append(tXgXg)
-    tXgyg_list.append(tXgyg)
-    tXX = tXX + tXgXg
-    tXy = tXy + tXgyg
-    
-  tXXinv = np.linalg.inv(tXX)
-  RtXXinv = np.matmul(R, tXXinv)
-
-  tXgX1g = None 
-  beta_hat = None
-  beta_tilde = None
-  beta_g_hat = None
-  beta_1g_tilde = None
-  inv_tXX_tXgXg = None
-  
-  #tXXinv @ tXy
-  
-  
-  # pre-compute required objects for different bootstrap types: 
-  
-  if(bootstrap_type in ["WCR3x", "WCU3x"]: 
-      
-    X1 = X[:,np.where(R == 0)]
-    X1_list = []
-    tX1gX1g = []
-    tX1gyg = []
-    tXgX1g = []
-    tX1X1 = np.zeros((k-1, k-1))
-    tX1y = np.array(k-1)
-      
-    for ix, g in enumerate(bootclustid):
-        X1_list.append(np.where(X1[bootcluster == g, 1, 0),:])
-        tX1gX1g.append(np.transpose(X1_list[ix]) @ X1_list[ix])
-        tX1gyg.append(np.transpose(X1_list[ix]) @ y_list[ix])
-        tXgX1g.append(np.transpose(X_list[ix]) @  X1_list[ix])
-        tX1X1 = tX1X1 + tX1gX1g[ix]
-        tX1y = tX1y + tX1gyg[ix]
-        
-    tX1X1inv = np.invert(tX1X1)
-  
-  elif(bootstrap_type in ["WCR1x"]): 
-      
-    beta_hat = tXXinv @ tXy
-    A = 1 / (np.transpose(R) @ tXXinv @ R)
-    beta_tilde = beta_hat - tXXinv @ R / A * (R @ beta_hat - 0)
-    
-  elif(bootstrap_type in "WCU1x): 
-    
-    beta_hat = np.matmul(tXXinv, tXy)
-
-  elif(bootstrap_type in "WCR3x"):
-    
-    inv_tXX_tXgXg = []
-    beta_1g_tilde = []
-    
-      for ix, g in enumerate(bootclustid):
-      # use generalized inverse 
-      inv_tXX_tXgXg.append(np.linalg.pinv(tXX - tXgXg_list[ix]))
-      beta_1_tilde = np.linalg.pinv(tX1X1 - tX1gX1g_list[ix]) @ (tX1y - tX1gyg_list[ix])
-      beta_1g_tilde.append()
-      
-  elif(bootstrap_type in "WCU3x"): 
-      
-      beta_g_hat = []
-      for ix, g in enumerate(bootclustid):
-        beta_g_hat.append(np.linalg.pinv(tXX - tXgXg_list[ix]) @ (tXy - tXgyg_list[ix]))
-  # precomputed required objects for CRV-types
-  
-  scores_list = get_scores(bootstrap_type, N_G_bootcluster, tXgyg_list, tXgXg_list, beta_tilde, beta_tilde, beta_hat, beta_1g_tilde, beta_g_hat):
-  scores_mat = np.transpose(np.array(scores_list)) # dim k x N_G_bootcluster
-  
-  if crv_type in ["crv1"]:
-    # Ag no longer needed, should be deleted from R code!
-    Ag = None
-  elif crv_type in ["crv3"]:
-    # might have been computed already above
-    if inv_tXX_tXgXg is not None: 
-      for ix, g in enumerate(bootclustid):
-        np.linalg.pinv(tXX - tXgXg_list[ix])
-    
-  # Calculate the bootstrap numerator
-  Cg = R @ tXXinv @ scores_mat 
-  numer = Cg @ v
-  
-  if crv_type == "crv1":
-    
-    H = np.zeros((G, G))
-    
-    # numba optimization possible? 
-    for ixg, g in enumerate(bootclustid):
-      for ixh, h in enumerate(bootclustid):
-        # can be improved by replacing list calls with matrices; 
-        H[ixg,ixh] = R @ tXXinv @ tXgXg_list[ixg] @ tXXinv @ scores_list[ixh]
-  
-    # now compute denominator
-    # numba / cython / c++ optimization possible? Porting this part from 
-    # R to c++ gives good speed improvements
-    
-    denom = np.zeros(B+1)
-    
-    for b in range(0, B+1):
-      Zg = np.zeros(G)
-      for ixg, g in enumerate(bootclustid):
-        vH = 0
-        for ixh, h in enumerate(bootclustid):
-          vH = vH + v[ixh,b] * H[ixg,ixh]
-        Zg[ixg] = Cg[ixg] * v[ixg,b] - vH
-      
-      denom[b] = ssc * np.sum(np.power(Zg,2))
-  
-  elif crv_type == "crv3":
-    
-    None
-    
-  else: 
-    
-    None
-    
-  # compute the t-statistics
-  t_boot = numer / np.sqrt(denom)
-  t_boot = t_boot[1:(B+1)] # drop first element - might be useful for comp. of
-  # covariance matrices
-  
-  # compute the non-bootstrapped vcov
-  
-  if(crv_type == "crv1"):
-    
-    meat = np.zeros((k,k))
-    for ixg, g in enumerate(bootclustid):
-      score = np.transpose(X_list[ixg]) @ (y_list[ixg] - X_list[ixg] @ beta_hat)
-      meat = meat + np.outer(score, score)
-      
-    vcov = tXXinv @ meat @ tXXinv
-    
-  elif crv_type == "crv3":
-    
-    None
-    
-  # compute the non-bootstrap t-stat
-  
-  se = np.sqrt(ssc * R @ vcov @ np.transpose(R))
-  t_stats = beta_hat / se
-  t_stat = t_stats[np.where(R == 1)]
-  
-  # compute the p-value
-  #pval = get_pvalue(t_stat, t_boot, pval_type)
-  pval = np.mean(np.abs(t_stat) < abs(t_boot))
-
-  return pval
-  
-  
-      
 
   
   
