@@ -8,7 +8,7 @@ def WCR11_not_WCU11():
   G= 20
   X = np.random.normal(0, 1, N * k).reshape((N,k))
   beta = np.random.normal(0,1,k)
-  beta[0] = 1
+  beta[0] = 0.1
   u = np.random.normal(0,1,N)
   y = 1 + X @ beta + u
   cluster = np.random.choice(list(range(0,G)), N)
@@ -22,26 +22,20 @@ def WCR11_not_WCU11():
   wcr.get_weights(weights_type = "rademacher")
   wcr.get_numer()
   wcr.get_denom()
-  wcr.numer
-  wcr.denom
   wcr.get_tboot()
-  wcr.t_boot
   wcr.get_vcov()
   wcr.get_tstat()
   wcr.get_pvalue(pval_type = "two-tailed")
   
-  wcu = Wildboottest(X = X, Y = y, cluster = cluster, bootcluster = bootcluster, R = R, B = 99999, seed = 12341)
-  wcu.get_scores(bootstrap_type = "11", impose_null = True)
-  wcr.get_weights(weights_type = "rademacher")
+  wcu = wb.Wildboottest(X = X, Y = y, cluster = cluster, bootcluster = bootcluster, R = R, B = 99999, seed = 12341)
+  wcu.get_scores(bootstrap_type = "11", impose_null = False)
+  wcu.get_weights(weights_type = "rademacher")
   wcu.get_numer()
   wcu.get_denom()
-  wcu.numer
-  wcu.denom
   wcu.get_tboot()
-  wcu.t_boot
   wcu.get_vcov()
   wcu.get_tstat()
-  wcu-(pval_type = "two-tailed")
+  wcu.get_pvalue(pval_type = "two-tailed")
 
   # score matrices of WCR11 and WCU11 should be different - currently not the case
   assert not np.array_equal(wcr.scores_mat, wcu.scores_mat)
