@@ -23,7 +23,7 @@ devtools::load_all(path_to_fwildclusterboot)
 
 # create the data set
 N_G1 <- 50
-data2 <- fwildclusterboot:::create_data(N = 10000,
+data2 <- fwildclusterboot:::create_data(N = 1000,
                                          N_G1 = N_G1,
                                          icc1 = 0.8,
                                          N_G2 = N_G1,
@@ -74,8 +74,9 @@ bootstrap_type = "11"
 object <- feols(proposition_vote ~ treatment + log_income + as.factor(group_id1), cluster = ~group_id1, data = data2)
 
 etable(object)
-system.time(boottest(object, param, B = 99999, ~group_id1))
+system.time(boot_res <- boottest(object, param, B = 99999, clustid = ~group_id2))
 #ssc
+pval(boot_res)
 ```
 
 run the first part of `boottest.fixest()`
@@ -237,7 +238,7 @@ y = np.array(r.Y)
 bootstrap_type = r.bootstrap_type
 N_G_bootcluster = r.N_G_bootcluster
 bootcluster = np.array(r.bootcluster)
-clusters = np.array(bootcluster)
+cluster = np.array(bootcluster)
 R = np.array(r.R0)
 impose_null = True
 B = int(r.boot_iter)
