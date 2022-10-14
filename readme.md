@@ -15,16 +15,16 @@ If you'd like to cooperate, either send us an
 Note: everything is still very much work in progress, and there are multiple errors in the code that I am aware of. Still, I believe that the implementation of the WCR11 is more or less correct.
 
 ```
+import wildboottest
 import timeit 
 import time
-from numba import jit
 
-N = 1000000
+N = 100000
 k = 100
 G= 50
 X = np.random.normal(0, 1, N * k).reshape((N,k))
 beta = np.random.normal(0,1,k)
-beta[0] = 0.1
+beta[0] = 0.005
 u = np.random.normal(0,1,N)
 y = 1 + X @ beta + u
 cluster = np.random.choice(list(range(0,G)), N)
