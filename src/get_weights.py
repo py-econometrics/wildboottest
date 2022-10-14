@@ -1,5 +1,5 @@
 import numpy as np
-from itertools import permutations
+from itertools import product
 
 class WildDrawFunctionException(Exception):
     pass
@@ -24,7 +24,7 @@ def norm(n):
 def webb(n):
     rng = np.random.default_rng()
     return rng.choice(
-        a = [-np.sqrt(np.array([3,2,1]) / 2), np.sqrt(np.array([1,2,3]) / 2)],
+        a = np.concatenate([-np.sqrt(np.array([3,2,1]) / 2), np.sqrt(np.array([1,2,3]) / 2)]),
         replace=True,
         size=n
     )
@@ -63,22 +63,18 @@ def get_weights(t : str, full_enumeration: bool, N_G_bootcluster: int, boot_iter
 
     # full_enumeration only for rademacher weights (set earlier)
     if full_enumeration: 
-        t = 0
-        #TODO: #12 Is this just a permutation function?
-        # gtools_permutations(
-        v0 = permutations( 
-            [-1,1],
-            r = N_G_bootcluster,
-        )
-        v = np.insert(v0, 0, 1)
+        t = 0 # what is this needed for? 
+        # with N_G_bootcluster draws, get all combinations of [-1,1] WITH 
+        # replacement, in matrix form
+        v0 = np.transpose(np.array(list(product([-1,1], repeat=N_G_bootcluster))))
     else:
         # else: just draw with replacement - by chance, some permutations
         # might occur more than once
-        v = wild_draw_fun(n = N_G_bootcluster * (boot_iter + 1))
-        #dim(v) <- c(N_G_bootcluster, boot_iter +1) don't think we need this
-        v = np.insert(v, 0, 1)
-        # v[, 1] <- 1
-    
+        v0 = wild_draw_fun(n = N_G_bootcluster * boot_iter)
+        v0.reshape(N_G_bootcluster, boot_iter) # weights matrix
+        
+    v = np.insert(v0, 0, 1,axis = 1)
+
     return v
   
   
