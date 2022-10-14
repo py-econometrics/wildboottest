@@ -23,7 +23,7 @@ devtools::load_all(path_to_fwildclusterboot)
 
 # create the data set
 N_G1 <- 50
-data2 <- fwildclusterboot:::create_data(N = 10000,
+data2 <- fwildclusterboot:::create_data(N = 1000,
                                          N_G1 = N_G1,
                                          icc1 = 0.8,
                                          N_G2 = N_G1,
@@ -45,7 +45,7 @@ param = "log_income"
 R <- NULL
 r <-  0
 beta0 <- NULL
-B <- boot_iter <-  999
+B <- boot_iter <-  9999
 bootcluster =  "min"
 fe = NULL
 sign_level = NULL
@@ -71,7 +71,12 @@ maxmatsize = NULL
 engine = "R"
 bootstrap_type = "11"
 
-object <- feols(proposition_vote ~ treatment + log_income + as.factor(group_id1), cluster = ~group_id1, data = voters)
+object <- feols(proposition_vote ~ treatment + log_income + as.factor(group_id1), cluster = ~group_id1, data = data2)
+
+etable(object)
+system.time(boot_res <- boottest(object, param, B = 99999, clustid = ~group_id2))
+#ssc
+pval(boot_res)
 ```
 
 run the first part of `boottest.fixest()`
@@ -217,7 +222,7 @@ make all objects from `preprocess()` available in the global namespace
 
 ```{r, warning = FALSE, message = FALSE}
 res <- lapply(names(preprocess), function(x) assign(x, preprocess[[x]], envir = .GlobalEnv))
-bootcluster <- as.vector(bootcluster)
+bootcluster <- as.vector(bootcluster)[[1]]
 ```
 
 ## pass all values to python
@@ -226,7 +231,6 @@ via the `reticulate` package
 
 ```{python}
 import numpy as np
-#import pandas as pd
 
 X = np.array(r.X)
 y = np.array(r.Y)
@@ -234,8 +238,13 @@ y = np.array(r.Y)
 bootstrap_type = r.bootstrap_type
 N_G_bootcluster = r.N_G_bootcluster
 bootcluster = np.array(r.bootcluster)
+cluster = np.array(bootcluster)
 R = np.array(r.R0)
+impose_null = True
+B = int(r.boot_iter)
+ssc = int(r.small_sample_correction)
 
+pval_type = r.p_val_type
 
 type(X)
 X[0:10, 0:10]
