@@ -17,7 +17,8 @@ LONG_DESC_TYPE = "text/markdown"
 INSTALL_REQUIRES = [
       'numpy',
       'pandas', 
-      'numba'
+      'numba',
+      'itertools'
 ]
 
 setup(name=PACKAGE_NAME,
