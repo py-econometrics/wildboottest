@@ -102,7 +102,7 @@ class Wildboottest:
     else: 
       self.full_enumeration = False
       
-    self.v = draw_weights(
+    self.v, self.B = draw_weights(
       t = self.weights_type, 
       full_enumeration = self.full_enumeration, 
       N_G_bootcluster = self.N_G_bootcluster,
@@ -347,10 +347,12 @@ def draw_weights(t : str, full_enumeration: bool, N_G_bootcluster: int, boot_ite
         # might occur more than once
         v0 = wild_draw_fun(n = N_G_bootcluster * boot_iter)
         v0 = v0.reshape(N_G_bootcluster, boot_iter) # weights matrix
-        
+    
+    # update boot_iter (B) - only relevant in enumeration case
+    boot_iter = v0.shape[1] 
     v = np.insert(v0, 0, 1,axis = 1)
 
-    return v
+    return [v, boot_iter]
   
   
 

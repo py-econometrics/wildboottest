@@ -17,8 +17,9 @@ def WCR11_not_WCU11():
   R[0] = 1
   B = 999
 
-  wcr = Wildboottest(X = X, Y = y, cluster = cluster, bootcluster = bootcluster, R = R, B = 99999, seed = 12341)
+  wcr = wb.Wildboottest(X = X, Y = y, cluster = cluster, bootcluster = bootcluster, R = R, B = 99999, seed = 12341)
   wcr.get_scores(bootstrap_type = "11", impose_null = True)
+  wcr.get_weights(weights_type = "rademacher")
   wcr.get_numer()
   wcr.get_denom()
   wcr.numer
@@ -31,6 +32,7 @@ def WCR11_not_WCU11():
   
   wcu = Wildboottest(X = X, Y = y, cluster = cluster, bootcluster = bootcluster, R = R, B = 99999, seed = 12341)
   wcu.get_scores(bootstrap_type = "11", impose_null = True)
+  wcr.get_weights(weights_type = "rademacher")
   wcu.get_numer()
   wcu.get_denom()
   wcu.numer
@@ -60,7 +62,33 @@ def test_r_vs_py():
   wildboottest_py_pval = 0.49314931493149317
 
   
-
+  
+def full_enum_works():
+  
+  N = 1000
+  k = 10
+  G= 4
+  X = np.random.normal(0, 1, N * k).reshape((N,k))
+  beta = np.random.normal(0,1,k)
+  beta[0] = 0.005
+  u = np.random.normal(0,1,N)
+  Y = 1 + X @ beta + u
+  cluster = np.random.choice(list(range(0,G)), N)
+  bootcluster = cluster
+  R = np.zeros(k)
+  R[0] = 1
+  B = 99999
+  
+  wcr = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = bootcluster, R = R, B = B, seed = 12341)
+  wcr.get_scores(bootstrap_type = "11", impose_null = False)
+  wcr.get_weights(weights_type = "rademacher")
+  wcr.get_numer()
+  wcr.get_denom()
+  wcr.get_tboot()
+  
+  assert len(wcr.t_boot) == 2**G
+  assert wcr.full_enumeration == True
+  
 
 
 
