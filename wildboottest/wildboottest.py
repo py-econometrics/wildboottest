@@ -30,8 +30,8 @@ class Wildboottest:
 
       if isinstance(X, pd.DataFrame):
         self.X = X.values
-      if isinstance(y, pd.DataFrame):
-        self.y = y.values
+      if isinstance(Y, pd.DataFrame):
+        self.Y = Y.values
       if isinstance(cluster, pd.DataFrame):
         clustid = cluster.unique()
         self.cluster = cluster.values
@@ -74,7 +74,7 @@ class Wildboottest:
         
         # split X and Y by (boot)cluster
         X_g = X[np.where(bootcluster == g)]
-        Y_g = y[np.where(bootcluster == g)]
+        Y_g = Y[np.where(bootcluster == g)]
         tXgXg = np.transpose(X_g) @ X_g
         tXgyg = np.transpose(X_g) @ Y_g
         X_list.append(X_g)
@@ -228,7 +228,7 @@ class Wildboottest:
   def get_tboot(self):
     
       t_boot = self.numer / np.sqrt(self.denom)
-      self.t_boot = t_boot[1:(B+1)] # drop first element - might be useful for comp. of
+      self.t_boot = t_boot[1:(self.B+1)] # drop first element - might be useful for comp. of
 
   def get_vcov(self):
     
