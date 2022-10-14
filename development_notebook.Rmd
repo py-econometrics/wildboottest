@@ -71,10 +71,10 @@ maxmatsize = NULL
 engine = "R"
 bootstrap_type = "11"
 
-object <- feols(proposition_vote ~ treatment + log_income + as.factor(group_id1), cluster = ~group_id1, data = voters)
+object <- feols(proposition_vote ~ treatment + log_income + as.factor(group_id1), cluster = ~group_id1, data = data2)
 
 etable(object)
-summary(boottest(object, param, B = 99999, clustid))
+system.time(boottest(object, param, B = 99999, ~group_id1))
 #ssc
 ```
 

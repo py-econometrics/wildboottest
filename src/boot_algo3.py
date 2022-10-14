@@ -8,7 +8,7 @@ class Wildboottest:
   Create an object of Wildboottest and get p-value by successively applying
   methods in the following way: 
     
-  wb = Wildboottest(X = X, Y = y, clusters = clusters, R = R, B = B)
+  wb = Wildboottest(X = X, Y = y, cluster = cluster, R = R, B = B)
   wb.get_scores(bootstrap_type = "11", impose_null = True)
   wb.get_numer()
   wb.get_denom()
@@ -17,12 +17,12 @@ class Wildboottest:
   wb.get_tstat()
   wb.get_pvalue()  
   
-  Later we can replace X, Y, clusters, R with an object estimated via 
+  Later we can replace X, Y, cluster, R with an object estimated via 
   statsmodels or linearmodels and a "param" values (as in fwildclusterboot::boottest())
   
   '''
   
-  def __init__(self, X, Y, clusters, R, B, seed = None):
+  def __init__(self, X, Y, cluster, bootcluster, R, B, seed = None):
       
       "Initialize the wildboottest class"
       #assert bootstrap_type in ['11', '13', '31', '33']
@@ -32,14 +32,14 @@ class Wildboottest:
         self.X = X.values
       if isinstance(y, pd.DataFrame):
         self.y = y.values
-      if isinstance(clusters, pd.DataFrame):
-        clustid = clusters.unique()
-        self.clusters = clusters.values
+      if isinstance(cluster, pd.DataFrame):
+        clustid = cluster.unique()
+        self.cluster = cluster.values
       if isinstance(bootcluster, pd.DataFrame):
         bootclustid = bootcluster.unique()
         self.bootcluster = bootcluster.values
       else:
-        clustid = np.unique(clusters)
+        clustid = np.unique(cluster)
         bootclustid = np.unique(bootcluster)
         
       if isinstance(seed, int):
@@ -54,9 +54,9 @@ class Wildboottest:
       self.X = X
       self.R = R
       
-      n_draws = (N_G_bootcluster * (B+1))
+      n_draws = (self.N_G_bootcluster * (B+1))
       v = np.random.choice([-1,1], int(n_draws))
-      v = v.reshape((N_G_bootcluster, int(B + 1)))
+      v = v.reshape((self.N_G_bootcluster, int(B + 1)))
       v[:,0] = 1
       self.v = v
       self.ssc = 1
@@ -68,7 +68,7 @@ class Wildboottest:
       tXX = np.zeros((k, k))
       tXy = np.zeros(k)
       
-      #all_clusters = np.unique(bootcluster)
+      #all_cluster = np.unique(bootcluster)
       
       for g in bootclustid:
         
@@ -247,7 +247,7 @@ class Wildboottest:
     t_stats = self.beta_hat / se
     self.t_stat = t_stats[np.where(self.R == 1)]
 
-  def get_pvalue(self):
+  def get_pvalue(self, pval_type = "two-tailed"):
     
     if pval_type == "two-tailed":
       self.pvalue = np.mean(np.abs(self.t_stat) < abs(self.t_boot))
@@ -259,5 +259,3 @@ class Wildboottest:
       self.pvalue = np.mean(self.t_stat < self.t_boot)
     else: 
       self.pvalue = np.mean(self.t_stat > self.t_boot)
-
-  
