@@ -99,12 +99,12 @@ class Wildboottest:
       
   def get_scores(self, bootstrap_type, impose_null):
     
-      if bootstrap_type[0:1] == '1':
+      if bootstrap_type[1:2] == '1':
         self.crv_type = "crv1"
-      elif bootstrap_type[0:1] == '3':
+      elif bootstrap_type[1:2] == '3':
         self.crv_type = "crv3"
 
-      bootstrap_type_x = bootstrap_type[1:2] + 'x'
+      bootstrap_type_x = bootstrap_type[0:1] + 'x'
 
       if impose_null == True:
         self.bootstrap_type = "WCR" + bootstrap_type_x
@@ -115,7 +115,7 @@ class Wildboottest:
       if self.bootstrap_type in ["WCR3x", "WCU3x"]: 
           
         X = self.X
-        X1 = X[:,np.where(self.R == 0)]
+        X1 = X[:,R != 1]
         X1_list = []
         tX1gX1g = []
         tX1gyg = []
@@ -124,10 +124,11 @@ class Wildboottest:
         tX1y = np.array(self.k-1)
           
         for ix, g in enumerate(self.bootclustid):
+          #ix = g = 1
           X1_list.append(X1[np.where(bootcluster == g)])
           tX1gX1g.append(np.transpose(X1_list[ix]) @ X1_list[ix])
-          tX1gyg.append(np.transpose(X1_list[ix]) @ y_list[ix])
-          tXgX1g.append(np.transpose(X_list[ix]) @  X1_list[ix])
+          tX1gyg.append(np.transpose(X1_list[ix]) @ self.Y_list[ix])
+          tXgX1g.append(np.transpose(self.X_list[ix]) @  X1_list[ix])
           tX1X1 = tX1X1 + tX1gX1g[ix]
           tX1y = tX1y + tX1gyg[ix]
             
@@ -151,7 +152,7 @@ class Wildboottest:
             
           beta_g_hat = []
           for ix, g in enumerate(self.bootclustid):
-            beta_g_hat.append(np.linalg.pinv(tXX - tXgXg_list[ix]) @ (tXy - tXgyg_list[ix]))
+            beta_g_hat.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]) @ (self.tXy - self.tXgyg_list[ix]))
   
           beta = beta_g_hat
           M = tXgXg_list
@@ -169,7 +170,7 @@ class Wildboottest:
         beta_hat = np.matmul(self.tXXinv, self.tXy)
         self.beta_hat = beta_hat
         beta = beta_hat 
-        M = tXgXg_list
+        M = self.tXgXg_list
 
       # compute the list of scores
       scores_list = []
