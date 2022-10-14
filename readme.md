@@ -37,6 +37,7 @@ B = 99999
 start_time = timeit.default_timer()
 wcr = wb.Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = bootcluster, R = R, B = B, seed = 12341)
 wcr.get_scores(bootstrap_type = "11", impose_null = True)
+wcr.get_weights(weights_type = "rademacher")
 wcr.get_numer()
 wcr.get_denom()
 wcr.numer
