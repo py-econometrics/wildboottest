@@ -12,27 +12,61 @@ If you'd like to cooperate, either send us an
 
 ## Example 
 
-Note: everything is still very much work in progress, and there are multiple errors in the code that I am aware of. Still, I believe that the implementation of the WCR11 is more or less correct.
+Note: everything is still very much work in progress. Still, I believe that the implementation of the WCR11 and WCU 11 is more or less correct.
 
 ```
-import wildboottest.wildboottest as wb
+from wildboottest.wildboottest import wildboottest, Wildboottest
+import statsmodels.api as sm
 import numpy as np
 import timeit 
 import time
 
-N = 100000
-k = 100
-G= 50
+N = 1000
+k = 10
+G= 12
 X = np.random.normal(0, 1, N * k).reshape((N,k))
 beta = np.random.normal(0,1,k)
 beta[0] = 0.005
 u = np.random.normal(0,1,N)
 Y = 1 + X @ beta + u
 cluster = np.random.choice(list(range(0,G)), N)
+B = 99999
+
+
+model = sm.OLS(Y, X)
+model.exog
+results = model.fit(cov_type = 'cluster', cov_kwds = {
+   'groups': cluster
+})
+results.summary()
+# >>> results.summary()
+# <class 'statsmodels.iolib.summary.Summary'>
+# """
+#                                  OLS Regression Results                                
+# =======================================================================================
+# Dep. Variable:                      y   R-squared (uncentered):                   0.799
+# Model:                            OLS   Adj. R-squared (uncentered):              0.797
+# Method:                 Least Squares   F-statistic:                              790.3
+# Date:                Sat, 15 Oct 2022   Prob (F-statistic):                    3.16e-14
+# Time:                        12:03:43   Log-Likelihood:                         -1784.6
+# No. Observations:                1000   AIC:                                      3589.
+# Df Residuals:                     990   BIC:                                      3638.
+# Df Model:                          10                                                  
+# Covariance Type:              cluster                                                  
+# ==============================================================================
+#                  coef    std err          z      P>|z|      [0.025      0.975]
+# ------------------------------------------------------------------------------
+# x1             0.0128      0.064      0.200      0.841      -0.113       0.138
+wildboottest(model, "X1", cluster, B)
+# 0.8408408408408409
+
+
+# execute, method by method
+
+# some preparations
 bootcluster = cluster
 R = np.zeros(k)
 R[0] = 1
-B = 99999
 
 start_time = timeit.default_timer()
 wcr = wb.Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = bootcluster, R = R, B = B, seed = 12341)
@@ -40,15 +74,12 @@ wcr.get_scores(bootstrap_type = "11", impose_null = True)
 wcr.get_weights(weights_type = "rademacher")
 wcr.get_numer()
 wcr.get_denom()
-wcr.numer
-wcr.denom
 wcr.get_tboot()
-wcr.t_boot
 wcr.get_vcov()
 wcr.get_tstat()
 wcr.get_pvalue(pval_type = "two-tailed")
 print("estimation time:", timeit.default_timer() - start_time)
 # >>> 0.9225496 seconds
 print("p value:", wcr.pvalue)
-# >>> p value: 0.15258152581525816
+# >>> p value: 0.8408408408408409
 ```

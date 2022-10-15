@@ -17,15 +17,15 @@ def WCR11_not_WCU11():
   R[0] = 1
   B = 999
 
-  wcr = wb.Wildboottest(X = X, Y = y, cluster = cluster, bootcluster = bootcluster, R = R, B = 99999, seed = 12341)
-  wcr.get_scores(bootstrap_type = "11", impose_null = True)
-  wcr.get_weights(weights_type = "rademacher")
-  wcr.get_numer()
-  wcr.get_denom()
-  wcr.get_tboot()
-  wcr.get_vcov()
-  wcr.get_tstat()
-  wcr.get_pvalue(pval_type = "two-tailed")
+  boot = Wildboottest(X = X, Y = y, cluster = cluster, bootcluster = bootcluster, R = R, B = 99999, seed = 12341)
+  boot.get_scores(bootstrap_type = "11", impose_null = True)
+  boot.get_weights(weights_type = "rademacher")
+  boot.get_numer()
+  boot.get_denom()
+  boot.get_tboot()
+  boot.get_vcov()
+  boot.get_tstat()
+  boot.get_pvalue(pval_type = "two-tailed")
   
   wcu = wb.Wildboottest(X = X, Y = y, cluster = cluster, bootcluster = bootcluster, R = R, B = 99999, seed = 12341)
   wcu.get_scores(bootstrap_type = "11", impose_null = False)
@@ -38,10 +38,10 @@ def WCR11_not_WCU11():
   wcu.get_pvalue(pval_type = "two-tailed")
 
   # score matrices of WCR11 and WCU11 should be different - currently not the case
-  assert not np.array_equal(wcr.scores_mat, wcu.scores_mat)
-  assert not np.array_equal(wcr.t_boot, wcu.t_boot)
-  assert np.array_equal(wcr.t_stat, wcu.t_stat)
-  assert not np.array_equal(wcr.pvalue, wcu.pvalue) # unless both pvals are zero or 1...
+  assert not np.array_equal(boot.scores_mat, wcu.scores_mat)
+  assert not np.array_equal(boot.t_boot, wcu.t_boot)
+  assert np.array_equal(boot.t_stat, wcu.t_stat)
+  assert not np.array_equal(boot.pvalue, wcu.pvalue) # unless both pvals are zero or 1...
 
 
 def test_r_vs_py():
@@ -74,14 +74,14 @@ def full_enum_works():
   B = 99999
   
   wcr = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = bootcluster, R = R, B = B, seed = 12341)
-  wcr.get_scores(bootstrap_type = "11", impose_null = False)
-  wcr.get_weights(weights_type = "rademacher")
-  wcr.get_numer()
-  wcr.get_denom()
-  wcr.get_tboot()
+  boot.get_scores(bootstrap_type = "11", impose_null = False)
+  boot.get_weights(weights_type = "rademacher")
+  boot.get_numer()
+  boot.get_denom()
+  boot.get_tboot()
   
-  assert len(wcr.t_boot) == 2**G
-  assert wcr.full_enumeration == True
+  assert len(boot.t_boot) == 2**G
+  assert boot.full_enumeration == True
   
 
 
