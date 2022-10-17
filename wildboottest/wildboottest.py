@@ -412,6 +412,8 @@ def wildboottest(model, param, cluster, B, weights_type = 'rademacher',impose_nu
   
   R = np.zeros(len(xnames))
   R[xnames.index(param)] = 1
+  # Just test for beta=0
+  # R = np.identity(len(xnames))
   
   # is it possible to fetch the clustering variables from the pre-processed data 
   # frame, e.g. with 'excluding' observations with missings etc
@@ -432,4 +434,33 @@ def wildboottest(model, param, cluster, B, weights_type = 'rademacher',impose_nu
   
   return boot.pvalue
   
+if __name__ == '__main__':
+    import statsmodels.api as sm
+    import numpy as np
 
+    np.random.seed(12312312)
+    N = 1000
+    k = 10
+    G= 10
+    X = np.random.normal(0, 1, N * k).reshape((N,k))
+    beta = np.random.normal(0,1,k)
+    beta[0] = 0.005
+    u = np.random.normal(0,1,N)
+    Y = 1 + X @ beta + u
+    cluster = np.random.choice(list(range(0,G)), N)
+
+    model = sm.OLS(Y, X)
+    
+    model.fit(cov_type='wildclusterbootstrap',
+              cov_kwds = {'cluster' : cluster,
+                          'B' : 9999,
+                          'weights_type' : 'rademacher',
+                          'impose_null' : True, 
+                          'bootstrap_type' : '11', 
+                          'seed' : None,
+                          'param' : 'X1'}).summary()
+    
+    
+
+    # boottest(model, param = "X1", cluster = cluster, B = 9999)
+    
