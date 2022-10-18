@@ -49,8 +49,7 @@ class Wildboottest:
       self.N_G_bootcluster = len(bootclustid)
       self.G  = len(clustid)
 
-      k = R.shape[0]
-      self.k = k 
+      self.k = R.shape[0]
       self.B = B
       self.X = X
       self.R = R
