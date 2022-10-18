@@ -60,8 +60,8 @@ class Wildboottest:
       y_list = []
       tXgXg_list = []
       tXgyg_list = []
-      tXX = np.zeros((k, k))
-      tXy = np.zeros(k)
+      tXX = np.zeros((self.k, self.k))
+      tXy = np.zeros(self.k)
       
       #all_cluster = np.unique(bootcluster)
       
@@ -354,7 +354,7 @@ def draw_weights(t : str, full_enumeration: bool, N_G_bootcluster: int, boot_ite
     return [v, boot_iter]
   
   
-def wildboottest(model, param, cluster, B, weights_type = 'rademacher',impose_null = True, bootstrap_type = '11', seed = None):
+def wildboottest(model, cluster, B, weights_type = 'rademacher',impose_null = True, bootstrap_type = '11', seed = None):
   
   '''
   Run a wild cluster bootstrap based on an object of class 'statsmodels.regression.linear_model.OLS'
@@ -397,8 +397,6 @@ def wildboottest(model, param, cluster, B, weights_type = 'rademacher',impose_nu
     
   '''
 
-  # set param to lowercase? model.data.xnames all seem to be lowercase?
-  param = str.lower(param)
   # does model.exog already exclude missing values?
   X = model.exog
   # interestingly, the dependent variable is called 'endogeneous'
@@ -409,29 +407,41 @@ def wildboottest(model, param, cluster, B, weights_type = 'rademacher',impose_nu
   xnames = model.data.xnames
   ynames = model.data.ynames
   
-  R = np.zeros(len(xnames))
-  R[xnames.index(param)] = 1
-  # Just test for beta=0
-  # R = np.identity(len(xnames))
+  pvalues = []
+  tstats = []
   
-  # is it possible to fetch the clustering variables from the pre-processed data 
-  # frame, e.g. with 'excluding' observations with missings etc
-  # cluster = ...
+  # hack to make a single param specified allow to be looped.
+  if isinstance(param, str):
+    param = [param]
   
-  # set bootcluster == cluster for one-way clustering
-  bootcluster = cluster
+  for param in xnames:
+    R = np.zeros(len(xnames))
+    R[xnames.index(param)] = 1
+    # Just test for beta=0
+    # R = np.identity(len(xnames))
+    
+    # is it possible to fetch the clustering variables from the pre-processed data 
+    # frame, e.g. with 'excluding' observations with missings etc
+    # cluster = ...
+    
+    # set bootcluster == cluster for one-way clustering
+    bootcluster = cluster
+    
+    boot = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = bootcluster, 
+                        R = R, B = B, seed = seed)
+    boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null)
+    boot.get_weights(weights_type = weights_type)
+    boot.get_numer()
+    boot.get_denom()
+    boot.get_tboot()
+    boot.get_vcov()
+    boot.get_tstat()
+    boot.get_pvalue(pval_type = "two-tailed")
+    
+    pvalues.append(boot.pvalue)
+    tstats.append(boot.t_stat)
   
-  boot = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = bootcluster, R = R, B = B, seed = seed)
-  boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null)
-  boot.get_weights(weights_type = weights_type)
-  boot.get_numer()
-  boot.get_denom()
-  boot.get_tboot()
-  boot.get_vcov()
-  boot.get_tstat()
-  boot.get_pvalue(pval_type = "two-tailed")
-  
-  return boot.pvalue
+  return np.array(pvalues), np.array(tstats).flatten()
   
 if __name__ == '__main__':
     import statsmodels.api as sm
@@ -450,14 +460,18 @@ if __name__ == '__main__':
 
     model = sm.OLS(Y, X)
     
-    model.fit(cov_type='wildclusterbootstrap',
+    print("--- WCB ---")
+    print(model.fit().summary())
+    
+    print("--- NonRobust ---")
+    print(model.fit(cov_type='wildclusterbootstrap',
               cov_kwds = {'cluster' : cluster,
                           'B' : 9999,
                           'weights_type' : 'rademacher',
                           'impose_null' : True, 
                           'bootstrap_type' : '11', 
-                          'seed' : None,
-                          'param' : 'X1'}).summary()
+                          'seed' : None}).summary())
+  
     
     
 
