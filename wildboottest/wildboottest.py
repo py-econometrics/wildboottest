@@ -354,7 +354,7 @@ def draw_weights(t : str, full_enumeration: bool, N_G_bootcluster: int, boot_ite
     return [v, boot_iter]
   
   
-def wildboottest(model, cluster, B, weights_type = 'rademacher',impose_null = True, bootstrap_type = '11', seed = None):
+def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',impose_null = True, bootstrap_type = '11', seed = None):
   
   '''
   Run a wild cluster bootstrap based on an object of class 'statsmodels.regression.linear_model.OLS'
@@ -410,15 +410,11 @@ def wildboottest(model, cluster, B, weights_type = 'rademacher',impose_null = Tr
   pvalues = []
   tstats = []
   
-  # hack to make a single param specified allow to be looped.
-  if isinstance(param, str):
-    param = [param]
-  
-  for param in xnames:
+  def generate_stats(param):
+
     R = np.zeros(len(xnames))
     R[xnames.index(param)] = 1
     # Just test for beta=0
-    # R = np.identity(len(xnames))
     
     # is it possible to fetch the clustering variables from the pre-processed data 
     # frame, e.g. with 'excluding' observations with missings etc
@@ -440,6 +436,16 @@ def wildboottest(model, cluster, B, weights_type = 'rademacher',impose_null = Tr
     
     pvalues.append(boot.pvalue)
     tstats.append(boot.t_stat)
+    
+    return pvalues, tstats
+    
+  if param is None:
+    for x in xnames:
+      pvalues, tstats = generate_stats(x)
+  elif isinstance(param, str):
+    pvalues, tstats = generate_stats(param)
+  else:
+    raise Exception("`param` not correctly specified")
   
   return np.array(pvalues), np.array(tstats).flatten()
   
@@ -457,8 +463,12 @@ if __name__ == '__main__':
     u = np.random.normal(0,1,N)
     Y = 1 + X @ beta + u
     cluster = np.random.choice(list(range(0,G)), N)
+    
+    X_df = pd.DataFrame(data=X, columns = [f"col_{i}" for i in range(k)])
+    
+    Y_df = pd.DataFrame(data=Y, columns = ['outcome'])
 
-    model = sm.OLS(Y, X)
+    model = sm.OLS(Y_df, X_df)
     
     print("--- WCB ---")
     print(model.fit().summary())
