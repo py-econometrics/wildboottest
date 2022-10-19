@@ -50,8 +50,7 @@ class Wildboottest:
       self.N_G_bootcluster = len(bootclustid)
       self.G  = len(clustid)
 
-      k = R.shape[0]
-      self.k = k 
+      self.k = R.shape[0]
       self.B = B
       self.X = X
       self.R = R
@@ -62,8 +61,8 @@ class Wildboottest:
       y_list = []
       tXgXg_list = []
       tXgyg_list = []
-      tXX = np.zeros((k, k))
-      tXy = np.zeros(k)
+      tXX = np.zeros((self.k, self.k))
+      tXy = np.zeros(self.k)
       
       #all_cluster = np.unique(bootcluster)
       
@@ -367,9 +366,8 @@ def draw_weights(t : str, full_enumeration: bool, N_G_bootcluster: int, boot_ite
     return [v, boot_iter]
   
   
+def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',impose_null = True, bootstrap_type = '11', seed = None):
 
-
-def wildboottest(model, cluster, B, param, weights_type = 'rademacher',impose_null = True, bootstrap_type = '11', seed = None):
   
   '''
   Run a wild cluster bootstrap based on an object of class 'statsmodels.regression.linear_model.OLS'
