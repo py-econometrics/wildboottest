@@ -52,10 +52,66 @@ def test_r_vs_py():
   # after wildboottest.py has nice interface for statsmodels/linearmodels
   # to reproduce: search for the commit, run dev notebookm run WCR11 in python
   # etc ...
-  fwildclusterboot_pval = 0.499435 
-  wildboottest_py_pval = 0.49314931493149317
-
   
+  from wildboottest.wildboottest import wildboottest, Wildboottest
+  import statsmodels.api as sm
+  import numpy as np
+  import pandas as pd
+  import statsmodels.api as sm
+  
+  np.random.seed(7567)
+  N = 1000
+  k = 2
+  # small sample size -> full enumeration
+  G= 3
+  X = np.random.normal(0, 1, N * k).reshape((N,k))
+  beta = np.random.normal(0,1,k)
+  beta[0] = 0.005
+  u = np.random.normal(0,1,N)
+  Y = 1 + X @ beta + u
+  cluster = np.random.choice(list(range(0,G)), N)
+  B = 99999
+  X_df = pd.DataFrame(X)
+  Y_df = pd.DataFrame(Y)
+  cluster_df = pd.DataFrame(cluster)
+  df = pd.concat([X_df, Y_df, cluster_df], axis = 1)  
+  df.columns = ['X1', 'X2','Y', 'cluster']
+  df.to_csv("~/wildboottest/data/test_df.csv")
+  model = sm.OLS(Y_df, X_df)
+  
+  bootstrap_types = ['11', '31']
+  impose_null = [True, False]
+  weights_type = "rademacher"
+  bootcluster = cluster
+  R = np.array([1,0])
+  
+  boot_tstats = []
+  for bootstrap_type in ['11', '31']: 
+    for impose_null in [True, False]:
+      boot = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = bootcluster, R = R, B = B, seed = 12341)
+      boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null)
+      boot.get_weights(weights_type = "rademacher")
+      boot.get_numer()
+      boot.get_denom()
+      boot.get_tboot()
+      boot.get_vcov()
+      boot.get_tstat()
+      boot.get_pvalue(pval_type = "two-tailed")
+      boot_tstats.append(boot.t_boot)
+
+  # now get all bootstrapped t-stats from fwildclusterboot
+  # R and Python need to return *identical results* (due to 
+  # deterministic, fully enumerated weights matrix)
+  
+  df = pd.DataFrame(np.transpose(np.array(boot_tstats)))
+  df.columns = ['WCR11', 'WCR31', 'WCU11', 'WCU31']
+  
+  r_df = pd.read_csv("~/wildboottest/data/test_df_fwc_res.csv")
+  
+  #asser df['WCR11'].sort_values().equals(r_df['WCU11'].sort_values()) 
+  
+  
+
   
 def full_enum_works():
   
@@ -82,3 +138,8 @@ def full_enum_works():
   
   assert len(boot.t_boot) == 2**G
   assert boot.full_enumeration == True
+  
+
+
+
+
