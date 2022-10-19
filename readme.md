@@ -1,4 +1,4 @@
-## wildboottest.py
+## wildboottest
 
 In this repo, we aim to develop a Python version of the wild cluster 
 bootstrap as implemented in Stata's [boottest](https://github.com/droodman/boottest), R's [fwildclusterboot](https://github.com/s3alfisc/fwildclusterboot) or 
