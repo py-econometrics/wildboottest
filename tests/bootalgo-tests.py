@@ -82,8 +82,3 @@ def full_enum_works():
   
   assert len(boot.t_boot) == 2**G
   assert boot.full_enumeration == True
-  
-
-
-
-
