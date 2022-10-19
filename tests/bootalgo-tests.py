@@ -1,16 +1,11 @@
 import pytest
 import numpy as np
 
-def bootstrap_types_diff_restults():
+def WCR11_not_WCU11():
   
-  '''
-  Do the different bootstrap types lead to similar, but 
-  not exactly identical results?
-  '''
-  
-  N = 1000
+  N = 100
   k = 2
-  G= 25
+  G= 20
   X = np.random.normal(0, 1, N * k).reshape((N,k))
   beta = np.random.normal(0,1,k)
   beta[0] = 0.1
@@ -22,31 +17,31 @@ def bootstrap_types_diff_restults():
   R[0] = 1
   B = 999
 
-  bootstrap_types = ['11', '31']
-  impose_nulls = [True, False]
-  res_all = []
+  boot = Wildboottest(X = X, Y = y, cluster = cluster, bootcluster = bootcluster, R = R, B = 99999, seed = 12341)
+  boot.get_scores(bootstrap_type = "11", impose_null = True)
+  boot.get_weights(weights_type = "rademacher")
+  boot.get_numer()
+  boot.get_denom()
+  boot.get_tboot()
+  boot.get_vcov()
+  boot.get_tstat()
+  boot.get_pvalue(pval_type = "two-tailed")
   
-  # fix seed 
-  for bootstrap_type in bootstrap_types:
-    for impose_null in impose_nulls:
-        boot = Wildboottest(X = X, Y = y, cluster = cluster, bootcluster = bootcluster, R = R, B = 99999, seed = 12341)
-        boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null)
-        boot.get_weights(weights_type = "rademacher")
-        boot.get_numer()
-        boot.get_denom()
-        boot.get_tboot()
-        boot.get_vcov()
-        boot.get_tstat()
-        boot.get_pvalue(pval_type = "two-tailed")   
-        res_all.append(boot)
-  
-  # 1) test that values that should (not) be identical are (not) identical    
-  for x in range(0, len(res_all) - 1):
-    
-    assert not np.array_equal(res_all[x].scores_mat, res_all[x+1].scores_mat)
-    assert not np.array_equal(res_all[x].t_boot, res_all[x+1].t_boot)
-    assert np.array_equal(res_all[x].t_stat, res_all[x+1].t_stat)
-    assert not np.array_equal(res_all[x].pvalue, res_all[x+1].pvalue) # unless both pvals are zero or 1...
+  wcu = wb.Wildboottest(X = X, Y = y, cluster = cluster, bootcluster = bootcluster, R = R, B = 99999, seed = 12341)
+  wcu.get_scores(bootstrap_type = "11", impose_null = False)
+  wcu.get_weights(weights_type = "rademacher")
+  wcu.get_numer()
+  wcu.get_denom()
+  wcu.get_tboot()
+  wcu.get_vcov()
+  wcu.get_tstat()
+  wcu.get_pvalue(pval_type = "two-tailed")
+
+  # score matrices of WCR11 and WCU11 should be different - currently not the case
+  assert not np.array_equal(boot.scores_mat, wcu.scores_mat)
+  assert not np.array_equal(boot.t_boot, wcu.t_boot)
+  assert np.array_equal(boot.t_stat, wcu.t_stat)
+  assert not np.array_equal(boot.pvalue, wcu.pvalue) # unless both pvals are zero or 1...
 
 
 def test_r_vs_py():
@@ -87,8 +82,3 @@ def full_enum_works():
   
   assert len(boot.t_boot) == 2**G
   assert boot.full_enumeration == True
-  
-
-
-
-
