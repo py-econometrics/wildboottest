@@ -49,8 +49,7 @@ class Wildboottest:
       self.N_G_bootcluster = len(bootclustid)
       self.G  = len(clustid)
 
-      k = R.shape[0]
-      self.k = k 
+      self.k = R.shape[0]
       self.B = B
       self.X = X
       self.R = R
@@ -61,8 +60,8 @@ class Wildboottest:
       y_list = []
       tXgXg_list = []
       tXgyg_list = []
-      tXX = np.zeros((k, k))
-      tXy = np.zeros(k)
+      tXX = np.zeros((self.k, self.k))
+      tXy = np.zeros(self.k)
       
       #all_cluster = np.unique(bootcluster)
       
@@ -355,4 +354,136 @@ def draw_weights(t : str, full_enumeration: bool, N_G_bootcluster: int, boot_ite
     return [v, boot_iter]
   
   
+def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',impose_null = True, bootstrap_type = '11', seed = None):
+  
+  '''
+  Run a wild cluster bootstrap based on an object of class 'statsmodels.regression.linear_model.OLS'
+  
+  Args: 
+    model(statsmodels.regression.linear_model.OLS'): A statsmodels regression object
+    param(str): A string of length one, containing the test parameter of interest
+    cluster(np.array): A numpy array of dimension one, containing the clustering variable.
+    B(int): The number of bootstrap iterations to run
+    weights_type(str): The type of bootstrap weights. Either 'rademacher', 'mammen', 'webb' or 'normal'. 
+                       'rademacher' by default.
+    impose_null(logical): Should the null hypothesis be imposed on the bootstrap dgp, or not?
+                          True by default. 
+    bootstrap_type(str). A string of length one. Allows to choose the bootstrap type 
+                         to be run. Either '11', '31', '13' or '33'. '11' by default.
+    seed(int). Option to provide a random seed. 
+    
+  Returns: 
+    A wild cluster bootstrapped p-value. 
+    
+  Example: 
+    
+    import statsmodels.api as sm
+    import numpy as np
 
+    np.random.seed(12312312)
+    N = 1000
+    k = 10
+    G= 10
+    X = np.random.normal(0, 1, N * k).reshape((N,k))
+    beta = np.random.normal(0,1,k)
+    beta[0] = 0.005
+    u = np.random.normal(0,1,N)
+    Y = 1 + X @ beta + u
+    cluster = np.random.choice(list(range(0,G)), N)
+
+    model = sm.OLS(Y, X)
+
+    boottest(model, param = "X1", cluster = cluster, B = 9999)
+    
+  '''
+
+  # does model.exog already exclude missing values?
+  X = model.exog
+  # interestingly, the dependent variable is called 'endogeneous'
+  Y = model.endog
+  # weights not yet used, only as a placeholder
+  weights = model.weights
+  
+  xnames = model.data.xnames
+  ynames = model.data.ynames
+  
+  pvalues = []
+  tstats = []
+  
+  def generate_stats(param):
+
+    R = np.zeros(len(xnames))
+    R[xnames.index(param)] = 1
+    # Just test for beta=0
+    
+    # is it possible to fetch the clustering variables from the pre-processed data 
+    # frame, e.g. with 'excluding' observations with missings etc
+    # cluster = ...
+    
+    # set bootcluster == cluster for one-way clustering
+    bootcluster = cluster
+    
+    boot = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = bootcluster, 
+                        R = R, B = B, seed = seed)
+    boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null)
+    boot.get_weights(weights_type = weights_type)
+    boot.get_numer()
+    boot.get_denom()
+    boot.get_tboot()
+    boot.get_vcov()
+    boot.get_tstat()
+    boot.get_pvalue(pval_type = "two-tailed")
+    
+    pvalues.append(boot.pvalue)
+    tstats.append(boot.t_stat)
+    
+    return pvalues, tstats
+    
+  if param is None:
+    for x in xnames:
+      pvalues, tstats = generate_stats(x)
+  elif isinstance(param, str):
+    pvalues, tstats = generate_stats(param)
+  else:
+    raise Exception("`param` not correctly specified")
+  
+  return np.array(pvalues), np.array(tstats).flatten()
+  
+if __name__ == '__main__':
+    import statsmodels.api as sm
+    import numpy as np
+
+    np.random.seed(12312312)
+    N = 1000
+    k = 10
+    G= 10
+    X = np.random.normal(0, 1, N * k).reshape((N,k))
+    beta = np.random.normal(0,1,k)
+    beta[0] = 0.005
+    u = np.random.normal(0,1,N)
+    Y = 1 + X @ beta + u
+    cluster = np.random.choice(list(range(0,G)), N)
+    
+    X_df = pd.DataFrame(data=X, columns = [f"col_{i}" for i in range(k)])
+    
+    Y_df = pd.DataFrame(data=Y, columns = ['outcome'])
+
+    model = sm.OLS(Y_df, X_df)
+    
+    print("--- WCB ---")
+    print(model.fit().summary())
+    
+    print("--- NonRobust ---")
+    print(model.fit(cov_type='wildclusterbootstrap',
+              cov_kwds = {'cluster' : cluster,
+                          'B' : 9999,
+                          'weights_type' : 'rademacher',
+                          'impose_null' : True, 
+                          'bootstrap_type' : '11', 
+                          'seed' : None}).summary())
+  
+    
+    
+
+    # boottest(model, param = "X1", cluster = cluster, B = 9999)
+    
