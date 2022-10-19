@@ -12,7 +12,7 @@ If you'd like to cooperate, either send us an
 
 ## Example 
 
-Note: everything is still very much work in progress. Still, I believe that the implementation of the WCR11 and WCU 11 is more or less correct.
+Note: everything is still very much work in progress. 
 
 ```
 from wildboottest.wildboottest import wildboottest, Wildboottest
