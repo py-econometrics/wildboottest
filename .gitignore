@@ -3,5 +3,6 @@
 .RData
 .Ruserdata
 .Rproj
-__pycache__/
+**/__pycache__/*
 *.egg-info/
+*.code-workspace
