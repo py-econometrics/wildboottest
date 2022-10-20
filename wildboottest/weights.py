@@ -1,3 +1,5 @@
+from multiprocessing.sharedctypes import Value
+from typing import Callable, Union
 import numpy as np
 from itertools import product
 
@@ -37,11 +39,12 @@ wild_draw_fun_dict = {
 }
 
   
-def draw_weights(t : str, full_enumeration: bool, N_G_bootcluster: int, boot_iter: int) -> np.ndarray:
+def draw_weights(t : Union[str, Callable], full_enumeration: bool, N_G_bootcluster: int, boot_iter: int) -> np.ndarray:
     """draw bootstrap weights
 
     Args:
-        t (str): the type of the weights distribution. Either 'rademacher', 'mammen', 'norm' or 'webb'
+        t (str|callable): the type of the weights distribution. Either 'rademacher', 'mammen', 'norm' or 'webb'
+        If `t` is a callable, must be a function of one variable, `n`, and return a vector of size `n`
         full_enumeration (bool): should deterministic full enumeration be employed
         N_G_bootcluster (int): the number of bootstrap clusters
         boot_iter (int): the number of bootstrap iterations
@@ -53,11 +56,14 @@ def draw_weights(t : str, full_enumeration: bool, N_G_bootcluster: int, boot_ite
     #TODO: we can use the `case` feature in python, but that's only available in 3.10+ will do a 3.7 version for now
     # Will take out this and make separate functions for readability
     
-    wild_draw_fun = wild_draw_fun_dict.get(t)
-    
-    if wild_draw_fun is None:
-        raise WildDrawFunctionException("Function type specified is not supported or there is a typo.")
-  
+    if isinstance(t, str):
+        wild_draw_fun = wild_draw_fun_dict.get(t)
+        if wild_draw_fun is None:
+            raise WildDrawFunctionException("Function type specified is not supported or there is a typo.")
+    elif callable(t):
+        wild_draw_fun = t
+    else:
+        raise ValueError(f"t can be string or callable, but got {type(t)}")
     # do full enumeration for rademacher weights if bootstrap iterations
     # B exceed number of possible permutations else random sampling
 

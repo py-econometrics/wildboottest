@@ -10,4 +10,13 @@ boot_iter = list(range(0,1000,400))
 def test_none_wild_draw_fun():
     with pytest.raises(WildDrawFunctionException):
         draw_weights(None, True, 1,1)
+
+def test_string_not_avail_wild_draw_fun():
+    with pytest.raises(WildDrawFunctionException):
+        draw_weights('something weird', True, 1,1)
         
+def test_wrong_type_wild_draw_fun():
+    with pytest.raises(ValueError):
+        draw_weights([1], True, 1,1)
+        
+
