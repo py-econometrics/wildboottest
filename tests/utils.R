@@ -1,6 +1,6 @@
 library(fwildclusterboot)
 
-df <- read.csv("~/wildboottest/data/test_df.csv")
+df <- read.csv("data/test_df.csv")
 fit <- lm(Y ~ X1 + X2, df)
 
 tboot_list <- 
@@ -24,4 +24,4 @@ df <-
     Reduce("cbind",tboot_list[[2]])
 ) |> as.data.frame()
 names(df) <- c("WCR11", "WCR31", "WCU11", "WCU31")
-write.csv(df, "~/wildboottest/data/test_df_fwc_res.csv")
+write.csv(df, "data/test_df_fwc_res.csv")

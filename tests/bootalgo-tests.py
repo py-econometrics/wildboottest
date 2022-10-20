@@ -1,6 +1,16 @@
 import pytest
 import numpy as np
 
+# rpy2 imports
+from rpy2.robjects.packages import importr
+import rpy2.robjects as ro
+from rpy2.robjects.packages import importr
+from rpy2.robjects import pandas2ri
+from rpy2.robjects.conversion import localconverter
+
+fwildclusterboot = importr("fwildclusterboot")
+stats = importr('stats')
+
 def WCR11_not_WCU11():
   
   N = 100
@@ -76,18 +86,21 @@ def test_r_vs_py():
   cluster_df = pd.DataFrame(cluster)
   df = pd.concat([X_df, Y_df, cluster_df], axis = 1)  
   df.columns = ['X1', 'X2','Y', 'cluster']
-  df.to_csv("~/wildboottest/data/test_df.csv")
-  model = sm.OLS(Y_df, X_df)
   
-  bootstrap_types = ['11', '31']
-  impose_null = [True, False]
-  weights_type = "rademacher"
+  # convert df to an R dataframe
+  with localconverter(ro.default_converter + pandas2ri.converter):
+    r_df = ro.conversion.py2rpy(df)
+
+  r_model = stats.lm("Y ~ X1 + X2", data=r_df)
   bootcluster = cluster
   R = np.array([1,0])
   
   boot_tstats = []
+  fwildclusterboot_boot_tstats = []
+  
   for bootstrap_type in ['11', '31']: 
     for impose_null in [True, False]:
+      # python implementation
       boot = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = bootcluster, R = R, B = B, seed = 12341)
       boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null)
       boot.get_weights(weights_type = "rademacher")
@@ -98,18 +111,31 @@ def test_r_vs_py():
       boot.get_tstat()
       boot.get_pvalue(pval_type = "two-tailed")
       boot_tstats.append(boot.t_boot)
-
-  # now get all bootstrapped t-stats from fwildclusterboot
-  # R and Python need to return *identical results* (due to 
-  # deterministic, fully enumerated weights matrix)
-  
+      
+      # R implementation
+      r_t_boot = fwildclusterboot.boottest(
+        r_model,
+        param = "X1",
+        clustid = ro.Formula("~cluster"),
+        B=99999,
+        bootstrap_type=bootstrap_type,
+        impose_null=impose_null,
+        ssc=fwildclusterboot.boot_ssc(adj=False, cluster_adj=False)
+      )
+      
+      fwildclusterboot_boot_tstats.append(list(r_t_boot.rx2("t_boot")))
+      
   df = pd.DataFrame(np.transpose(np.array(boot_tstats)))
   df.columns = ['WCR11', 'WCR31', 'WCU11', 'WCU31']
   
-  r_df = pd.read_csv("~/wildboottest/data/test_df_fwc_res.csv")
+  r_df = pd.DataFrame(np.transpose(np.array(fwildclusterboot_boot_tstats)))
+  r_df.columns = ['WCR11', 'WCR31', 'WCU11', 'WCU31']
   
-  #asser df['WCR11'].sort_values().equals(r_df['WCU11'].sort_values()) 
-  
+  print("Python")
+  print(df)
+  print("\n")
+  print("R")
+  print(r_df)  
   
 
   
@@ -139,7 +165,7 @@ def full_enum_works():
   assert len(boot.t_boot) == 2**G
   assert boot.full_enumeration == True
   
+if __name__ == '__main__':
+  test_r_vs_py()
 
-
-
-
+  full_enum_works()
