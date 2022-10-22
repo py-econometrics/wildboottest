@@ -137,6 +137,15 @@ def test_r_vs_py():
   print("R")
   print(r_df)  
   
+  def mse(x, y):
+    return np.mean(np.power(x - y, 2))
+  
+  assert mse(df['WCR11'].sort_values(), r_df['WCR11'].sort_values()) < 1e-15
+  assert mse(df['WCU11'].sort_values(), r_df['WCU11'].sort_values()) < 1e-15
+  assert mse(df['WCR31'].sort_values(), r_df['WCR31'].sort_values()) < 1e-15
+  assert mse(df['WCU31'].sort_values(), r_df['WCU31'].sort_values()) < 1e-15
+
+  
 
   
 def full_enum_works():
