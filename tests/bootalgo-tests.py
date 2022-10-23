@@ -80,7 +80,7 @@ def test_r_vs_py_deterministic():
       r_t_boot = fwildclusterboot.boottest(
         r_model,
         param = "X1",
-        clustid = ro.Formula("~cluster"),
+        clustid = "cluster",
         B=99999,
         bootstrap_type=bootstrap_type,
         impose_null=impose_null,
@@ -179,7 +179,7 @@ def test_r_vs_py_stochastic():
           r_t_boot = fwildclusterboot.boottest(
             r_model,
             param = "X1",
-            clustid = ro.Formula("~cluster"),
+            clustid = "cluster",
             B=99999,
             bootstrap_type=bootstrap_type,
             impose_null=impose_null,
