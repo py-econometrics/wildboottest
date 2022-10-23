@@ -4,7 +4,6 @@ import numpy as np
 # rpy2 imports
 from rpy2.robjects.packages import importr
 import rpy2.robjects as ro
-from rpy2.robjects.packages import importr
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
 
@@ -67,25 +66,26 @@ def test_r_vs_py():
   import statsmodels.api as sm
   import numpy as np
   import pandas as pd
-  import statsmodels.api as sm
-  
-  np.random.seed(7567)
+
+  np.random.seed(7512367)
   N = 1000
-  k = 2
+  k = 3
   # small sample size -> full enumeration
-  G= 3
+  G= 5
   X = np.random.normal(0, 1, N * k).reshape((N,k))
+  X[:,0] = 1
   beta = np.random.normal(0,1,k)
-  beta[0] = 0.005
+  beta[1] = 0.005
   u = np.random.normal(0,1,N)
-  Y = 1 + X @ beta + u
+  Y = X @ beta + u
   cluster = np.random.choice(list(range(0,G)), N)
   B = 99999
   X_df = pd.DataFrame(X)
   Y_df = pd.DataFrame(Y)
   cluster_df = pd.DataFrame(cluster)
   df = pd.concat([X_df, Y_df, cluster_df], axis = 1)  
-  df.columns = ['X1', 'X2','Y', 'cluster']
+  df.columns = ['intercept','X1','X2','Y', 'cluster']
+  #df.to_csv("data/test_df.csv")
   
   # convert df to an R dataframe
   with localconverter(ro.default_converter + pandas2ri.converter):
@@ -93,7 +93,7 @@ def test_r_vs_py():
 
   r_model = stats.lm("Y ~ X1 + X2", data=r_df)
   bootcluster = cluster
-  R = np.array([1,0])
+  R = np.array([0,1,0])
   
   boot_tstats = []
   fwildclusterboot_boot_tstats = []
@@ -128,14 +128,16 @@ def test_r_vs_py():
   df = pd.DataFrame(np.transpose(np.array(boot_tstats)))
   df.columns = ['WCR11', 'WCR31', 'WCU11', 'WCU31']
   
+  # r_df = pd.read_csv("data/test_df_fwc_res.csv")[['WCR11', "WCR31", "WCU11", "WCU31"]]
   r_df = pd.DataFrame(np.transpose(np.array(fwildclusterboot_boot_tstats)))
   r_df.columns = ['WCR11', 'WCR31', 'WCU11', 'WCU31']
   
+  # all values need to be sorted
   print("Python")
-  print(df)
+  print(df.sort_values(by=list(df.columns),axis=0).head())
   print("\n")
   print("R")
-  print(r_df)  
+  print(r_df.sort_values(by=list(r_df.columns),axis=0).head())  
   
   def mse(x, y):
     return np.mean(np.power(x - y, 2))
