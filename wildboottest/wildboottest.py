@@ -183,9 +183,8 @@ class Wildboottest:
           
       elif self.bootstrap_type in ["WCU1x"]: 
             
-        beta_hat = self.tXXinv @ self.tXy
-        self.beta_hat = beta_hat
-        beta = beta_hat 
+        self.beta_hat = self.tXXinv @ self.tXy
+        beta = self.beta_hat 
         M = self.tXgXg_list
 
       # compute scores based on tXgyg, M, beta
@@ -236,7 +235,7 @@ class Wildboottest:
             for ixg, g in enumerate(bootclustid):
               vH = 0
               for ixh, h in enumerate(bootclustid):
-                vH = vH + v[ixh,b] * H[ixg,ixh]
+                vH += v[ixh,b] * H[ixg,ixh]
               Zg[ixg] = Cg[ixg] * v[ixg,b] - vH
             
             # todo: ssc
@@ -258,7 +257,7 @@ class Wildboottest:
       meat = np.zeros((self.k,self.k))
       for ixg, g in enumerate(self.bootclustid):
         score = np.transpose(self.X_list[ixg]) @ (self.Y_list[ixg] - self.X_list[ixg] @ self.beta_hat)
-        meat = meat + np.outer(score, score)
+        meat += np.outer(score, score)
       
       self.vcov = self.tXXinv @ meat @ self.tXXinv
     

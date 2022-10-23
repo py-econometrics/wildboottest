@@ -15,10 +15,10 @@ def test_r_vs_py_deterministic():
   '''
   test compares bootstrapped t-statistics for R and Python 
   versions in the full enumeration case. Under full enum, 
-  the weights matrices are identical (up to the ordering) 
-  of columns, and therefore bootstrap t-statistics need to be
-  *exactly* identical (if the same small sample correction) 
-  is applied. 
+  the weights matrices are identical (up to the ordering 
+  of columns), and therefore bootstrap t-statistics need to be
+  *exactly* identical (if the same small sample correction 
+  is applied). 
   '''
   # based on data created via the development_notebook.Rmd
   # with B = 99999 bootstrap iterations, WCR11
@@ -32,8 +32,8 @@ def test_r_vs_py_deterministic():
   import numpy as np
   import pandas as pd
 
-  np.random.seed(7512367)
-  N = 1000
+  np.random.seed(12312)
+  N = 10000
   k = 3
   # small sample size -> full enumeration
   G= 5
