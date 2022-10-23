@@ -183,7 +183,7 @@ class Wildboottest:
           
       elif self.bootstrap_type in ["WCU1x"]: 
             
-        beta_hat = np.matmul(self.tXXinv, self.tXy)
+        beta_hat = self.tXXinv @ self.tXy
         self.beta_hat = beta_hat
         beta = beta_hat 
         M = self.tXgXg_list
