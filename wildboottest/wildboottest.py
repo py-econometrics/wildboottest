@@ -385,21 +385,27 @@ def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',im
     
   Example: 
     
+    from wildboottest.wildboottest import wildboottest
     import statsmodels.api as sm
     import numpy as np
+    import pandas as pd
+    
     np.random.seed(12312312)
     N = 1000
     k = 10
-    G= 10
+    G = 10
     X = np.random.normal(0, 1, N * k).reshape((N,k))
+    X = pd.DataFrame(X)
+    X.rename(columns = {0:"X1"}, inplace = True)
     beta = np.random.normal(0,1,k)
     beta[0] = 0.005
     u = np.random.normal(0,1,N)
     Y = 1 + X @ beta + u
     cluster = np.random.choice(list(range(0,G)), N)
     model = sm.OLS(Y, X)
-    boottest(model, param = "X1", cluster = cluster, B = 9999)
-    
+    wildboottest(model, param = "X1", cluster = cluster, B = 9999)
+    wildboottest(model, cluster = cluster, B = 9999)
+
   '''
 
   # does model.exog already exclude missing values?
@@ -441,18 +447,25 @@ def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',im
     
     pvalues.append(boot.pvalue)
     tstats.append(boot.t_stat)
-    
+  
     return pvalues, tstats
     
   if param is None:
     for x in xnames:
       pvalues, tstats = generate_stats(x)
+    param = xnames
   elif isinstance(param, str):
     pvalues, tstats = generate_stats(param)
   else:
     raise Exception("`param` not correctly specified")
   
-  return np.array(pvalues), np.array(tstats).flatten()
+  res = {
+    'param': param,
+    'statistic': tstats,
+    'p-value': pvalues
+  }
+  
+  return pd.DataFrame(res)
   
 if __name__ == '__main__':
     import statsmodels.api as sm
@@ -486,8 +499,3 @@ if __name__ == '__main__':
                           'impose_null' : True, 
                           'bootstrap_type' : '11', 
                           'seed' : None}).summary())
-  
-    
-    
-
-    # boottest(model, param = "X1", cluster = cluster, B = 9999)
