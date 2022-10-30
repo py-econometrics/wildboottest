@@ -201,10 +201,10 @@ def test_error_warnings():
   - know edge cases that lead to errors provide valuable info (e.g. WCR with 
     one param regressions)
   '''
-  
+  assert 1 == 1
   
   
 if __name__ == '__main__':
-  test_r_vs_py_stochastic()
-  test_r_vs_py_deterministic()
+  #test_r_vs_py_stochastic()
+  #test_r_vs_py_deterministic()
   test_error_warnings()
