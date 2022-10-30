@@ -22,7 +22,7 @@ def test_r_vs_py_stochastic():
   given the same small sample adjustments are applied
   '''
 
-  #from wildboottest.wildboottest import wildboottest, Wildboottest
+  from wildboottest.wildboottest import wildboottest, Wildboottest
   import statsmodels.api as sm
   import numpy as np
   import pandas as pd
