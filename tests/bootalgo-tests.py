@@ -173,7 +173,7 @@ def test_r_vs_py_stochastic():
           boot.get_vcov()
           boot.get_tstat()
           boot.get_pvalue(pval_type = pval_type)
-          boot_pvals.append(boot.pvals)
+          boot_pvals.append(boot.pvalue)
           
           # R implementation
           r_t_boot = fwildclusterboot.boottest(
