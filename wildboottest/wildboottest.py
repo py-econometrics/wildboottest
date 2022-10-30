@@ -177,38 +177,33 @@ class Wildboottest:
             
         self.beta_hat = self.tXXinv @ self.tXy
         A = 1 / (np.transpose(self.R) @ self.tXXinv @ self.R)
-        beta_tilde = self.beta_hat - self.tXXinv @ self.R / A * (self.R @ self.beta_hat - 0)
+        beta_tilde = self.beta_hat - self.tXXinv @ self.R * A * (self.R @ self.beta_hat - 0)
         beta = beta_tilde
         M = self.tXgXg_list
           
       elif self.bootstrap_type in ["WCU1x"]: 
             
-        beta_hat = np.matmul(self.tXXinv, self.tXy)
-        self.beta_hat = beta_hat
-        beta = beta_hat 
+        self.beta_hat = self.tXXinv @ self.tXy
+        beta = self.beta_hat 
         M = self.tXgXg_list
 
-      # compute the list of scores; this can surely be implemented in a
-      # more succint way
+      # compute scores based on tXgyg, M, beta
       scores_list = []
-      if isinstance(M, list):
-        if isinstance(beta, list):
-          for ix, g in enumerate(self.bootclustid):
-            scores_list.append(self.tXgyg_list[ix] - M[ix] @ beta[ix])
-        else:
-          for ix, g in enumerate(self.bootclustid):
-            scores_list.append(self.tXgyg_list[ix] - M[ix] @ beta)
-      else:
-        if isinstance(beta, list):
-          for ix, g in enumerate(self.bootclustid):
-            scores_list.append(self.tXgyg_list[ix] - M @ beta[ix])
-        else:
-          for ix, g in enumerate(self.bootclustid):
-            scores_list.append(self.tXgyg_list[ix] - M @ beta)
-  
+      
+      if(self.bootstrap_type in ["WCR1x", "WCU1x"]):
+        
+        for ix, g in enumerate(self.bootclustid):
+        
+          scores_list.append(self.tXgyg_list[ix] - M[ix] @ beta)
+      
+      elif(self.bootstrap_type in ["WCR3x", "WCU3x"]):
+        
+        for ix, g in enumerate(self.bootclustid):
+        
+          scores_list.append(self.tXgyg_list[ix] - M[ix] @ beta[ix])
+        
       self.scores_mat = np.transpose(np.array(scores_list)) # k x G 
       
-  
   def get_numer(self):
     
       # Calculate the bootstrap numerator
@@ -240,7 +235,7 @@ class Wildboottest:
             for ixg, g in enumerate(bootclustid):
               vH = 0
               for ixh, h in enumerate(bootclustid):
-                vH = vH + v[ixh,b] * H[ixg,ixh]
+                vH += v[ixh,b] * H[ixg,ixh]
               Zg[ixg] = Cg[ixg] * v[ixg,b] - vH
             
             # todo: ssc
@@ -262,7 +257,7 @@ class Wildboottest:
       meat = np.zeros((self.k,self.k))
       for ixg, g in enumerate(self.bootclustid):
         score = np.transpose(self.X_list[ixg]) @ (self.Y_list[ixg] - self.X_list[ixg] @ self.beta_hat)
-        meat = meat + np.outer(score, score)
+        meat += np.outer(score, score)
       
       self.vcov = self.tXXinv @ meat @ self.tXXinv
     
@@ -496,4 +491,3 @@ if __name__ == '__main__':
     
 
     # boottest(model, param = "X1", cluster = cluster, B = 9999)
-    
