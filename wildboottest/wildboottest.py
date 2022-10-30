@@ -245,6 +245,36 @@ class Wildboottest:
           
         self.denom = compute_denom(self.Cg, H, self.bootclustid, self.B, self.G, self.v, self.ssc)
       
+      else if self.crv_type == "crv3":
+        
+        for b in range(0, B+1):
+          
+          scores_g_boot = np.zeros(self.G, self.k)
+          v_ = v[:,b]
+          
+          for ixg, g in enumerate(bootclustid):
+            
+            scores_g_boot[ixg,:] = scores_mat[:,ixg] * v_[ixg]
+            
+          scores_boot = np.sum(scores_g_boot, axis = 1)
+          delta_b_star = tXXinv @ scores_boot
+          
+          delta_diff = np.zeros(self.G, self.k)
+          
+          for ixg, g in enumerate(bootclustid):
+            
+            score_diff = score_boot - score_g_boot[:,ixg]
+            delta_diff[:,ixg] = (
+              
+              (self.inv_tXX_tXgXg[ixg] @ score_diff - delta_b_star)**2
+              
+            )
+            
+          se[b] = np.sqrt((self.G - 1) / self.G) * (np.sum(delta_diff, axis = 1))[np.where(self.R == 1)]
+          t_boot[b] = delta_b_star[np.where(self.R == 1)] / se[b]
+          
+        
+      
   def get_tboot(self):
     
       t_boot = self.numer / np.sqrt(self.denom)
@@ -260,7 +290,24 @@ class Wildboottest:
         meat += np.outer(score, score)
       
       self.vcov = self.tXXinv @ meat @ self.tXXinv
-    
+      
+    else if self.crv_type == "crv3": 
+      
+      # calculate leave-one out beta hat
+      beta_jack = []
+      for ixg, g in enumerate(self.bootclustid):
+        beta_jack.append(
+          np.linalg.pinv(tXX - tXgXg_list[ixg]) @ (tXy - np.transpose(X_list[ixg] @ y_list[ixg]))
+        )
+        
+      beta_center = self.beta_hat
+      
+      vcov3 = np.array(self.k, self.k)
+      for ixg, g in enumerate(self.bootclustid):
+          vcov3 += np.outer(beta_jack[ixg] - beta_center)
+          
+      self.vcov = ((self.G  - 1) / self.G) * vcov3
+      
         
   def get_tstat(self):
         
