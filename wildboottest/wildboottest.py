@@ -25,7 +25,30 @@ class Wildboottest:
   
   def __init__(self, X, Y, cluster, bootcluster, R, B, seed = None):
       
-      "Initialize the wildboottest class"
+      '''
+      Initialize the Wildboottest class.
+
+        Parameters: 
+
+            X (np.array or pd.DataFrame): The design matrix X of the regression
+                                          model of interest.
+            Y (np.array or pd.DataFrame): The dependent variable Y of the regression
+                                          model of interest. 
+            cluster (np.array or pd.DataFrame): The clustering variable of the regression model 
+                                                of interest. 
+            bootcluster (np.array or pd.DataFrame): The bootstrap clustering variable. 
+            R (np.array): The constraint for the hypothesis test of interest of the form 
+                          R' x beta = r, where R is a vector of length ncol(X) = k, consisting 
+                          of zeros and 1 for the coefficient of interest beta_j; 
+            B (int): The number of bootstrap replications.
+            seed (int): A random seed. If None, the seed is inherited from the global environment.
+
+        Returns: 
+
+            An initiated object of type Wildboottest. 
+      
+      '''
+
       #assert bootstrap_type in ['11', '13', '31', '33']
       #assert impose_null in [True, False]
 
@@ -94,6 +117,18 @@ class Wildboottest:
       self.tXXinv = tXXinv 
       
   def get_weights(self, weights_type):
+
+    '''
+      Enrich an object of type Wildboottest by a bootstrap weight matrix v. 
+      The bootstrap weights matrix is either of dimensio G x (B+1), where B is 
+      the chosen number of bootstrap iterations and G the number of (boot-)clusters, 
+      or G x (2^G) for the fully enumerated case.
+
+      Parameters:
+
+          weights_type (string): Either 'rademacher', 'mammen', 'webb', or 'norm'.
+
+    '''
     
     self.weights_type = weights_type 
     
@@ -110,6 +145,18 @@ class Wildboottest:
     )  
     
   def get_scores(self, bootstrap_type, impose_null):
+
+    '''
+    Compute score vectors for the different supported bootstrap types.
+    Currently, the 'WCR11', 'WCR31', 'WCU11' and 'WCU31' types are supported.
+
+    Parameters: 
+
+        bootstrap_type (string). Either '11' or '31'
+        impose_null (bool): Either True or False. If True, imposes the null 
+                            hypothesis on the bootstrap data generating process 
+                            (WCR), else not (WCU).
+    '''
     
       if bootstrap_type[1:2] == '1':
         self.crv_type = "crv1"
@@ -206,11 +253,23 @@ class Wildboottest:
       
   def get_numer(self):
     
+    '''
+    Compute the B+1 numerators of the bootstrapped t-test.
+    '''
+
       # Calculate the bootstrap numerator
       self.Cg = self.R @ self.tXXinv @ self.scores_mat 
       self.numer = self.Cg @ self.v
     
   def get_denom(self):
+
+    '''
+    Compute the B+1 denominators of the bootstrapped t-test, either 
+    using a CRV1 variance-covariance matrix estimator, or a CRV3 
+    estimator. 
+
+    Currently, only the CRV1 vcov estimator is supported. 
+    '''
     
       if self.crv_type == "crv1":
     
@@ -247,10 +306,17 @@ class Wildboottest:
       
   def get_tboot(self):
     
+      '''
+      Compute bootstrapped t-statistics.
+      '''
       t_boot = self.numer / np.sqrt(self.denom)
       self.t_boot = t_boot[1:(self.B+1)] # drop first element - might be useful for comp. of
 
   def get_vcov(self):
+
+    '''
+    Estimate non-bootstrapped CRV1 or CRV3 variance-covariance matrices.
+    '''
     
     if self.crv_type == "crv1":
           
@@ -263,6 +329,10 @@ class Wildboottest:
     
         
   def get_tstat(self):
+
+    '''
+    Compute a non-bootstrapped t-statistic.
+    '''
         
     se = np.sqrt(self.ssc * self.R @ self.vcov @ np.transpose(self.R))
     t_stats = self.beta_hat / se
@@ -270,6 +340,14 @@ class Wildboottest:
 
   def get_pvalue(self, pval_type = "two-tailed"):
     
+    '''
+    Compute a bootstrapped p-value. 
+
+    Parameters: 
+
+        pval_type (string): Either 'two-tailed', 'equal-tailed', '>' or '<'
+
+    '''
     if pval_type == "two-tailed":
       self.pvalue = np.mean(np.abs(self.t_stat) < abs(self.t_boot))
     elif pval_type == "equal-tailed":
@@ -288,10 +366,32 @@ class WildDrawFunctionException(Exception):
     pass
 
 def rademacher(n: int) -> np.ndarray:
+
+    '''
+    Compute random bootstrap weights via the rademacher distribution. 
+
+    Parameters: 
+        n (int): The number of draws. 
+
+    Returns: 
+        A np.array of rademacher weights of length n.
+    '''
+
     rng = np.random.default_rng()
     return rng.choice([-1,1],size=n, replace=True)
 
 def mammen(n: int) -> np.ndarray:
+
+    '''
+    Compute random bootstrap weights via the mammen distribution. 
+
+    Parameters: 
+        n (int): The number of draws. 
+
+    Returns: 
+        A np.array of mammen weights of length n.
+    '''
+
     rng = np.random.default_rng()
     return rng.choice(
         a= np.array([-1, 1]) * (np.sqrt(5) + np.array([-1, 1])) / 2, #TODO: #10 Should this divide the whole expression by 2 or just the second part
@@ -301,10 +401,30 @@ def mammen(n: int) -> np.ndarray:
     )
     
 def norm(n):
+
+    '''
+    Compute random bootstrap weights via a normal distribution. 
+
+    Parameters: 
+        n (int): The number of draws. 
+
+    Returns: 
+        A np.array of normal weights of length n.
+    '''
     rng = np.random.default_rng()
     return rng.normal(size=n)
 
 def webb(n):
+
+    '''
+    Compute random bootstrap weights follwoing Webb (2013) 
+
+    Parameters: 
+        n (int): The number of draws. 
+
+    Returns: 
+        A np.array of webb weights of length n.
+    '''
     rng = np.random.default_rng()
     return rng.choice(
         a = np.concatenate([-np.sqrt(np.array([3,2,1]) / 2), np.sqrt(np.array([1,2,3]) / 2)]),
@@ -321,7 +441,11 @@ wild_draw_fun_dict = {
 
   
 def draw_weights(t : str, full_enumeration: bool, N_G_bootcluster: int, boot_iter: int) -> np.ndarray:
-    """draw bootstrap weights
+    
+    """
+    Draw bootstrap weights. For rademacher weights and B < 2^N_G_bootcluster, employ 'full enumeration', 
+    i.e. each permutation of bootstrap weights is sampled exactly once. 
+    
     Args:
         t (str): the type of the weights distribution. Either 'rademacher', 'mammen', 'norm' or 'webb'
         full_enumeration (bool): should deterministic full enumeration be employed
@@ -398,6 +522,7 @@ def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',im
     Y = 1 + X @ beta + u
     cluster = np.random.choice(list(range(0,G)), N)
     model = sm.OLS(Y, X)
+    
     boottest(model, param = "X1", cluster = cluster, B = 9999)
     
   '''
