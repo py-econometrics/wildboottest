@@ -11,7 +11,7 @@
 
 
 
-<title>readme</title>
+<title>README.knit</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -358,8 +358,8 @@ pre code {
 </div>
 
 
-<div id="wildboottest.py" class="section level2">
-<h2>wildboottest.py</h2>
+<div id="wildboottest" class="section level2">
+<h2>wildboottest</h2>
 <p>In this repo, we aim to develop a Python version of the wild cluster
 bootstrap as implemented in Stata’s <a href="https://github.com/droodman/boottest">boottest</a>, R’s <a href="https://github.com/s3alfisc/fwildclusterboot">fwildclusterboot</a>
 or Julia’s <a href="https://github.com/droodman/WildBootTests.jl">WildBootTests.jl</a>
@@ -369,42 +369,43 @@ issues section!</p>
 </div>
 <div id="example" class="section level2">
 <h2>Example</h2>
-<pre><code>import timeit 
-import time
-from numba import jit
+<p>Note: everything is still very much work in progress.</p>
+<pre class="python"><code>from wildboottest.wildboottest import wildboottest
+import statsmodels.api as sm
+import numpy as np
+import pandas as pd
 
-N = 1000000
-k = 100
-G= 50
+# create data
+np.random.seed(12312312)
+N = 1000
+k = 10
+G = 10
 X = np.random.normal(0, 1, N * k).reshape((N,k))
+X = pd.DataFrame(X)
+X.rename(columns = {0:&quot;X1&quot;}, inplace = True)
 beta = np.random.normal(0,1,k)
-beta[0] = 0.1
+beta[0] = 0.005
 u = np.random.normal(0,1,N)
-y = 1 + X @ beta + u
+Y = 1 + X @ beta + u
 cluster = np.random.choice(list(range(0,G)), N)
-bootcluster = cluster
-R = np.zeros(k)
-R[0] = 1
-B = 99999
 
-start_time = timeit.default_timer()
-wb = Wildboottest(X = X, Y = y, cluster = cluster, bootcluster = bootcluster, R = R, B = B, seed = 12341)
-wb.get_scores(bootstrap_type = &quot;11&quot;, impose_null = False)
-wb.get_numer()
-wb.get_denom()
-wb.numer
-wb.denom
-wb.get_tboot()
-wb.t_boot
-wb.get_vcov()
-wb.get_tstat()
-wb.get_pvalue(pval_type = &quot;two-tailed&quot;)
-print(&quot;estimation time:&quot;, timeit.default_timer() - start_time)
-# &gt;&gt;&gt; 0.1981981981981982
-print(&quot;p value:&quot;, wb.pvalue)
-# &gt;&gt;&gt; p value: 0.15258152581525816
-
-</code></pre>
+# estimation
+model = sm.OLS(Y, X)
+wildboottest(model, param = &quot;X1&quot;, cluster = cluster, B = 9999)</code></pre>
+<pre><code>##   param              statistic   p-value
+## 0    X1  [-0.9161101602560844]  0.423828</code></pre>
+<pre class="python"><code>wildboottest(model, cluster = cluster, B = 9999)</code></pre>
+<pre><code>##   param              statistic   p-value
+## 0    X1  [-0.9161101602560844]  0.423828
+## 1     1   [-23.47104637779698]  0.001953
+## 2     2   [14.490683161123965]  0.000000
+## 3     3  [-12.622808111755516]  0.001953
+## 4     4   [-19.98559455990591]  0.001953
+## 5     5   [1.4925442694763955]  0.191406
+## 6     6    [7.231015380060432]  0.000000
+## 7     7   [-41.37320307285552]  0.001953
+## 8     8    [17.31090484734575]  0.001953
+## 9     9   [-37.31996125067985]  0.000000</code></pre>
 </div>
 
 
