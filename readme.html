@@ -11,7 +11,7 @@
 
 
 
-<title>README.knit</title>
+<title>README</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -370,7 +370,7 @@ issues section!</p>
 <div id="example" class="section level2">
 <h2>Example</h2>
 <p>Note: everything is still very much work in progress.</p>
-<pre class="python"><code>from wildboottest.wildboottest import wildboottest
+<pre class="{python}"><code>from wildboottest.wildboottest import wildboottest
 import statsmodels.api as sm
 import numpy as np
 import pandas as pd
@@ -391,21 +391,8 @@ cluster = np.random.choice(list(range(0,G)), N)
 
 # estimation
 model = sm.OLS(Y, X)
-wildboottest(model, param = &quot;X1&quot;, cluster = cluster, B = 9999)</code></pre>
-<pre><code>##   param              statistic   p-value
-## 0    X1  [-0.9161101602560844]  0.423828</code></pre>
-<pre class="python"><code>wildboottest(model, cluster = cluster, B = 9999)</code></pre>
-<pre><code>##   param              statistic   p-value
-## 0    X1  [-0.9161101602560844]  0.423828
-## 1     1   [-23.47104637779698]  0.001953
-## 2     2   [14.490683161123965]  0.000000
-## 3     3  [-12.622808111755516]  0.001953
-## 4     4   [-19.98559455990591]  0.001953
-## 5     5   [1.4925442694763955]  0.191406
-## 6     6    [7.231015380060432]  0.000000
-## 7     7   [-41.37320307285552]  0.001953
-## 8     8    [17.31090484734575]  0.001953
-## 9     9   [-37.31996125067985]  0.000000</code></pre>
+wildboottest(model, param = &quot;X1&quot;, cluster = cluster, B = 9999)
+wildboottest(model, cluster = cluster, B = 9999)</code></pre>
 </div>
 
 
