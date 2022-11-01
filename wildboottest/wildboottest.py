@@ -29,7 +29,7 @@ class Wildboottest:
   R = np.zeros(k)
   R[0] = 1
   wcr = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = bootcluster, R = R, B = B, seed = 12341)
-  wcr.get_scores(bootstrap_type = "33", impose_null = True)
+  wcr.get_scores(bootstrap_type = "11", impose_null = True)
   wcr.get_weights(weights_type = "rademacher")
   wcr.get_numer()
   wcr.get_denom()
@@ -52,75 +52,51 @@ class Wildboottest:
       if isinstance(Y, pd.DataFrame):
         self.Y = Y.values
       if isinstance(cluster, pd.DataFrame):
-        clustid = cluster.unique()
+        self.clustid = cluster.unique()
         self.cluster = cluster.values
       if isinstance(bootcluster, pd.DataFrame):
-        bootclustid = bootcluster.unique()
+        self.bootclustid = bootcluster.unique()
         self.bootcluster = bootcluster.values
       else:
-        clustid = np.unique(cluster)
-        bootclustid = np.unique(bootcluster)
+        self.clustid = np.unique(cluster)
+        self.bootclustid = np.unique(bootcluster)
         self.bootcluster = bootcluster
         
       if isinstance(seed, int):
         np.random.seed(seed)
 
-      self.N_G_bootcluster = len(bootclustid)
-      self.G = len(clustid)
+      self.N_G_bootcluster = len(self.bootclustid)
+      self.G = len(self.clustid)
 
       self.k = R.shape[0]
       self.B = B
       self.X = X
       self.R = R
+    
+      self.X_list = []
+      self.Y_list = []
+      self.tXgXg_list = []
+      self.tXgyg_list = []
+      self.tXX = np.zeros((self.k, self.k))
+      self.tXy = np.zeros(self.k)
       
-      if bootstrap_type[1:2] == '1':
-        self.crv_type = "crv1"
-        self.ssc = 1
-      elif bootstrap_type[1:2] == '3':
-        self.crv_type = "crv3"
-        self.ssc = (self.G  - 1) / self.G
-        
-      bootstrap_type_x = bootstrap_type[0:1] + 'x'
-
-      if impose_null == True:
-        self.bootstrap_type = "WCR" + bootstrap_type_x
-      else:
-        self.bootstrap_type = "WCU" + bootstrap_type_x
-
-      X_list = []
-      y_list = []
-      tXgXg_list = []
-      tXgyg_list = []
-      tXX = np.zeros((self.k, self.k))
-      tXy = np.zeros(self.k)
-      
-      for g in bootclustid:
+      for ix, g in enumerate(self.bootclustid):
         
         # split X and Y by (boot)cluster
         X_g = X[np.where(bootcluster == g)]
         Y_g = Y[np.where(bootcluster == g)]
         tXgXg = np.transpose(X_g) @ X_g
         tXgyg = np.transpose(X_g) @ Y_g
-        X_list.append(X_g)
-        y_list.append(Y_g)
-        tXgXg_list.append(tXgXg)
-        tXgyg_list.append(tXgyg)
-        tXX = tXX + tXgXg
-        tXy = tXy + tXgyg
+        self.X_list.append(X_g)
+        self.Y_list.append(Y_g)
+        self.tXgXg_list.append(tXgXg)
+        self.tXgyg_list.append(tXgyg)
+        self.tXX += tXgXg
+        self.tXy += tXgyg
       
-      self.clustid = clustid
-      self.bootclustid = bootclustid
-      self.X_list = X_list
-      self.Y_list = y_list
-      self.tXgXg_list = tXgXg_list
-      self.tXgyg_list = tXgyg_list
-      self.tXX = tXX
-      self.tXy = tXy
-        
-      tXXinv = np.linalg.inv(tXX)
-      self.RtXXinv = np.matmul(R, tXXinv)
-      self.tXXinv = tXXinv 
-      
+      self.tXXinv = np.linalg.inv(self.tXX)
+      self.RtXXinv = np.matmul(R, self.tXXinv)
+
   def get_weights(self, weights_type):
     
     self.weights_type = weights_type 
@@ -139,7 +115,20 @@ class Wildboottest:
     
   def get_scores(self, bootstrap_type, impose_null):
     
+      if bootstrap_type[1:2] == '1':
+        self.crv_type = "crv1"
+        self.ssc = 1
+      elif bootstrap_type[1:2] == '3':
+        self.crv_type = "crv3"
+        self.ssc = (self.G  - 1) / self.G
+        
+      bootstrap_type_x = bootstrap_type[0:1] + 'x'
 
+      if impose_null == True:
+        self.bootstrap_type = "WCR" + bootstrap_type_x
+      else:
+        self.bootstrap_type = "WCU" + bootstrap_type_x
+        
       # precompute required objects for computing scores & vcov's
       if self.bootstrap_type in ["WCR3x", "WCU3x"]: 
         
