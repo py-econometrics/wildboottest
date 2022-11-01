@@ -56,7 +56,7 @@ def test_r_vs_py_stochastic():
 
   boot_pvals = []
   
-  for bootstrap_type in ['11', '31']: 
+  for bootstrap_type in ['11', '31', '13','33']: 
     for impose_null in [True, False]:
       for weights_type in ['rademacher','mammen', 'webb','norm']:
         for pval_type in ['two-tailed', 'equal-tailed', '>', '<']:

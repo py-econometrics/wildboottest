@@ -62,7 +62,7 @@ def test_r_vs_py_deterministic():
   boot_tstats = []
   fwildclusterboot_boot_tstats = []
   
-  for bootstrap_type in ['11', '31']: 
+  for bootstrap_type in ['11', '31', '13','33']: 
     for impose_null in [True, False]:
       # python implementation
       boot = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
