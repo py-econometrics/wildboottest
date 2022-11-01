@@ -73,6 +73,20 @@ class Wildboottest:
       self.X = X
       self.R = R
       
+      if bootstrap_type[1:2] == '1':
+        self.crv_type = "crv1"
+        self.ssc = 1
+      elif bootstrap_type[1:2] == '3':
+        self.crv_type = "crv3"
+        self.ssc = (self.G  - 1) / self.G
+        
+      bootstrap_type_x = bootstrap_type[0:1] + 'x'
+
+      if impose_null == True:
+        self.bootstrap_type = "WCR" + bootstrap_type_x
+      else:
+        self.bootstrap_type = "WCU" + bootstrap_type_x
+
       X_list = []
       y_list = []
       tXgXg_list = []
@@ -125,22 +139,7 @@ class Wildboottest:
     
   def get_scores(self, bootstrap_type, impose_null):
     
-      if bootstrap_type[1:2] == '1':
-        self.crv_type = "crv1"
-        self.ssc = 1
-      elif bootstrap_type[1:2] == '3':
-        self.crv_type = "crv3"
-        self.ssc = (self.G  - 1) / self.G
-        
-      
 
-      bootstrap_type_x = bootstrap_type[0:1] + 'x'
-
-      if impose_null == True:
-        self.bootstrap_type = "WCR" + bootstrap_type_x
-      else:
-        self.bootstrap_type = "WCU" + bootstrap_type_x
-    
       # precompute required objects for computing scores & vcov's
       if self.bootstrap_type in ["WCR3x", "WCU3x"]: 
         
