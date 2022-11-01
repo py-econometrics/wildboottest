@@ -8,26 +8,42 @@ class Wildboottest:
   '''
   Create an object of Wildboottest and get p-value by successively applying
   methods in the following way: 
-    
-  wb = Wildboottest(X = X, Y = y, cluster = cluster, R = R, B = B)
-  wb.get_scores(bootstrap_type = "11", impose_null = True)
-  wb.get_numer()
-  wb.get_denom()
-  wb.get_tboot()
-  wb.get_vcov()
-  wb.get_tstat()
-  wb.get_pvalue()  
   
-  Later we can replace X, Y, cluster, R with an object estimated via 
-  statsmodels or linearmodels and a "param" values (as in fwildclusterboot::boottest())
+  from wildboottest.wildboottest import Wildboottest
+  import numpy as np
+  import pandas as pd
   
+  # create data
+  N = 1000
+  k = 10
+  G= 12
+  X = np.random.normal(0, 1, N * k).reshape((N,k))
+  beta = np.random.normal(0,1,k)
+  beta[0] = 0.005
+  u = np.random.normal(0,1,N)
+  Y = 1 + X @ beta + u
+  cluster = np.random.choice(list(range(0,G)), N)
+  B = 9999
+  bootcluster = cluster
+  R = np.zeros(k)
+  R[0] = 1
+  wcr = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = bootcluster, R = R, B = B, seed = 12341)
+  wcr.get_scores(bootstrap_type = "33", impose_null = True)
+  wcr.get_weights(weights_type = "rademacher")
+  wcr.get_numer()
+  wcr.get_denom()
+  wcr.get_tboot()
+  wcr.get_vcov()
+  wcr.get_tstat()
+  wcr.get_pvalue(pval_type = "two-tailed")
+  wcr.pvalue
+  
+
   '''
   
   def __init__(self, X, Y, cluster, bootcluster, R, B, seed = None):
       
       "Initialize the wildboottest class"
-      #assert bootstrap_type in ['11', '13', '31', '33']
-      #assert impose_null in [True, False]
 
       if isinstance(X, pd.DataFrame):
         self.X = X.values
@@ -48,14 +64,12 @@ class Wildboottest:
         np.random.seed(seed)
 
       self.N_G_bootcluster = len(bootclustid)
-      self.G  = len(clustid)
+      self.G = len(clustid)
 
       self.k = R.shape[0]
       self.B = B
       self.X = X
       self.R = R
-      
-      self.ssc = 1
       
       X_list = []
       y_list = []
@@ -63,8 +77,6 @@ class Wildboottest:
       tXgyg_list = []
       tXX = np.zeros((self.k, self.k))
       tXy = np.zeros(self.k)
-      
-      #all_cluster = np.unique(bootcluster)
       
       for g in bootclustid:
         
@@ -113,8 +125,12 @@ class Wildboottest:
     
       if bootstrap_type[1:2] == '1':
         self.crv_type = "crv1"
+        self.ssc = 1
       elif bootstrap_type[1:2] == '3':
         self.crv_type = "crv3"
+        self.ssc = (self.G  - 1) / self.G
+        
+      
 
       bootstrap_type_x = bootstrap_type[0:1] + 'x'
 
@@ -153,12 +169,12 @@ class Wildboottest:
           
           self.beta_hat = self.tXXinv @ self.tXy
 
-          inv_tXX_tXgXg = []
+          self.inv_tXX_tXgXg = []
           beta_1g_tilde = []
           
           for ix, g in enumerate(self.bootclustid):
             # use generalized inverse 
-            inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
+            self.inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
             beta_1g_tilde.append(np.linalg.pinv(tX1X1 - tX1gX1g_list[ix]) @ (tX1y - tX1gyg_list[ix]))
 
           beta = beta_1g_tilde
@@ -186,7 +202,7 @@ class Wildboottest:
         self.beta_hat = self.tXXinv @ self.tXy
         beta = self.beta_hat 
         M = self.tXgXg_list
-
+        
       # compute scores based on tXgyg, M, beta
       scores_list = []
       
@@ -245,34 +261,45 @@ class Wildboottest:
           
         self.denom = compute_denom(self.Cg, H, self.bootclustid, self.B, self.G, self.v, self.ssc)
       
-      else if self.crv_type == "crv3":
+      elif self.crv_type == "crv3":
         
-        for b in range(0, B+1):
-          
-          scores_g_boot = np.zeros(self.G, self.k)
-          v_ = v[:,b]
-          
-          for ixg, g in enumerate(bootclustid):
+        # already computed for WCR3x in get_scores()
+        if not hasattr(self, "inv_tXX_tXgXg"):
             
-            scores_g_boot[ixg,:] = scores_mat[:,ixg] * v_[ixg]
-            
-          scores_boot = np.sum(scores_g_boot, axis = 1)
-          delta_b_star = tXXinv @ scores_boot
+          self.inv_tXX_tXgXg = []
+
+          for ix, g in enumerate(self.bootclustid):
+            # use generalized inverse 
+            self.inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
+
+        self.denom = np.zeros(self.B + 1)
+
+        for b in range(0, self.B + 1):
           
-          delta_diff = np.zeros(self.G, self.k)
+          scores_g_boot = np.zeros((self.G, self.k))
+          v_ = self.v[:,b]
           
-          for ixg, g in enumerate(bootclustid):
+          for ixg, g in enumerate(self.bootclustid):
             
-            score_diff = score_boot - score_g_boot[:,ixg]
-            delta_diff[:,ixg] = (
+            scores_g_boot[ixg,:] = self.scores_mat[:,ixg] * v_[ixg]
+            
+          scores_boot = np.sum(scores_g_boot, axis = 0)
+          delta_b_star = self.tXXinv @ scores_boot
+          
+          delta_diff = np.zeros((self.G, self.k))
+          
+          for ixg, g in enumerate(self.bootclustid):
+            
+            score_diff = scores_boot - scores_g_boot[ixg,:]
+            delta_diff[ixg,:] = (
               
               (self.inv_tXX_tXgXg[ixg] @ score_diff - delta_b_star)**2
               
             )
             
-          se[b] = np.sqrt((self.G - 1) / self.G) * (np.sum(delta_diff, axis = 1))[np.where(self.R == 1)]
-          t_boot[b] = delta_b_star[np.where(self.R == 1)] / se[b]
-          
+          # se's
+          self.denom[b] = np.sqrt(self.ssc * np.sum(delta_diff, axis = 0)[np.where(self.R == 1)])
+
         
       
   def get_tboot(self):
@@ -291,22 +318,26 @@ class Wildboottest:
       
       self.vcov = self.tXXinv @ meat @ self.tXXinv
       
-    else if self.crv_type == "crv3": 
+    elif self.crv_type == "crv3": 
       
       # calculate leave-one out beta hat
-      beta_jack = []
+      beta_jack = np.zeros((self.G, self.k))
       for ixg, g in enumerate(self.bootclustid):
-        beta_jack.append(
-          np.linalg.pinv(tXX - tXgXg_list[ixg]) @ (tXy - np.transpose(X_list[ixg] @ y_list[ixg]))
+        beta_jack[ixg,:] = (
+          np.linalg.pinv(self.tXX - self.tXgXg_list[ixg]) @ (self.tXy - np.transpose(self.X_list[ixg]) @ self.Y_list[ixg])
         )
-        
+      
+      if not hasattr(self, "beta_hat"):
+        beta_hat = self.tXXinv @ self.tXy
+      
       beta_center = self.beta_hat
       
-      vcov3 = np.array(self.k, self.k)
+      vcov3 = np.zeros((self.k, self.k))
       for ixg, g in enumerate(self.bootclustid):
-          vcov3 += np.outer(beta_jack[ixg] - beta_center)
+          beta_centered = beta_jack[ixg,:] - beta_center
+          vcov3 += np.outer(beta_centered, beta_centered)
           
-      self.vcov = ((self.G  - 1) / self.G) * vcov3
+      self.vcov =  vcov3
       
         
   def get_tstat(self):
