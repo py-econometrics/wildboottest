@@ -14,9 +14,10 @@ class Wildboottest:
   import pandas as pd
   
   # create data
+  np.random.seed(87523578)
   N = 1000
   k = 10
-  G= 12
+  G= 25
   X = np.random.normal(0, 1, N * k).reshape((N,k))
   beta = np.random.normal(0,1,k)
   beta[0] = 0.005
@@ -37,7 +38,8 @@ class Wildboottest:
   wcr.get_tstat()
   wcr.get_pvalue(pval_type = "two-tailed")
   wcr.pvalue
-  
+  wcr.t_boot
+  wcr.t_stat
 
   '''
   
@@ -298,7 +300,7 @@ class Wildboottest:
             )
             
           # se's
-          self.denom[b] = np.sqrt(self.ssc * np.sum(delta_diff, axis = 0)[np.where(self.R == 1)])
+          self.denom[b] = self.ssc * np.sum(delta_diff, axis = 0)[np.where(self.R == 1)]
 
         
       
