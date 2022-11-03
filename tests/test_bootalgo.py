@@ -179,7 +179,6 @@ def test_r_vs_py_stochastic(data):
             ssc=fwildclusterboot.boot_ssc(adj=False, cluster_adj=False)
           )
 
-  
   # test condition ... 
   fwildclusterboot_boot_tstats.append(list(r_t_boot.rx2("t_boot")))
       
@@ -189,6 +188,21 @@ def test_r_vs_py_stochastic(data):
   # r_df = pd.read_csv("data/test_df_fwc_res.csv")[['WCR11', "WCR31", "WCU11", "WCU31"]]
   r_df = pd.DataFrame(np.transpose(np.array(fwildclusterboot_boot_tstats)))
   r_df.columns = ['WCR11', 'WCR31', 'WCU11', 'WCU31']
+
+  # all values need to be sorted
+  print("Python")
+  print(df.sort_values(by=list(df.columns),axis=0).head())
+  print("\n")
+  print("R")
+  print(r_df.sort_values(by=list(r_df.columns),axis=0).head())  
+  
+  def mse(x, y):
+    return np.mean(np.power(x - y, 2))
+  
+  assert mse(df['WCR11'].sort_values(), r_df['WCR11'].sort_values()) < 1e-15
+  assert mse(df['WCU11'].sort_values(), r_df['WCU11'].sort_values()) < 1e-15
+  assert mse(df['WCR31'].sort_values(), r_df['WCR31'].sort_values()) < 1e-15
+  assert mse(df['WCU31'].sort_values(), r_df['WCU31'].sort_values()) < 1e-15
 
 def test_error_warnings():
   
