@@ -1,5 +1,4 @@
-from multiprocessing.sharedctypes import Value
-from typing import Callable, Union
+from typing import Callable, Union, Tuple
 import numpy as np
 from itertools import product
 
@@ -39,7 +38,7 @@ wild_draw_fun_dict = {
 }
 
   
-def draw_weights(t : Union[str, Callable], full_enumeration: bool, N_G_bootcluster: int, boot_iter: int) -> np.ndarray:
+def draw_weights(t : Union[str, Callable], full_enumeration: bool, N_G_bootcluster: int, boot_iter: int) -> Tuple[np.ndarray, int]:
     """draw bootstrap weights
 
     Args:
@@ -62,6 +61,8 @@ def draw_weights(t : Union[str, Callable], full_enumeration: bool, N_G_bootclust
             raise WildDrawFunctionException("Function type specified is not supported or there is a typo.")
     elif callable(t):
         wild_draw_fun = t
+    elif t is None:
+        raise WildDrawFunctionException("`t` must be specified")
     else:
         raise ValueError(f"t can be string or callable, but got {type(t)}")
     # do full enumeration for rademacher weights if bootstrap iterations
@@ -83,4 +84,4 @@ def draw_weights(t : Union[str, Callable], full_enumeration: bool, N_G_bootclust
     boot_iter = v0.shape[1] 
     v = np.insert(v0, 0, 1,axis = 1)
 
-    return [v, boot_iter]
+    return v, boot_iter
