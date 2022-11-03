@@ -1,6 +1,11 @@
 import pytest
 import numpy as np
 
+from wildboottest.wildboottest import wildboottest, Wildboottest
+import statsmodels.api as sm
+import numpy as np
+import pandas as pd
+
 # rpy2 imports
 from rpy2.robjects.packages import importr
 import rpy2.robjects as ro
@@ -10,7 +15,30 @@ from rpy2.robjects.conversion import localconverter
 fwildclusterboot = importr("fwildclusterboot")
 stats = importr('stats')
 
-def test_r_vs_py_deterministic():
+@pytest.fixture
+def data():
+  np.random.seed(12312)
+  N = 10000
+  k = 3
+  # small sample size -> full enumeration
+  G= 5
+  X = np.random.normal(0, 1, N * k).reshape((N,k))
+  X[:,0] = 1
+  beta = np.random.normal(0,1,k)
+  beta[1] = 0.005
+  u = np.random.normal(0,1,N)
+  Y = X @ beta + u
+  cluster = np.random.choice(list(range(0,G)), N)
+  X_df = pd.DataFrame(X)
+  Y_df = pd.DataFrame(Y)
+  cluster_df = pd.DataFrame(cluster)
+  df = pd.concat([X_df, Y_df, cluster_df], axis = 1)  
+  df.columns = ['intercept','X1','X2','Y', 'cluster']
+  B = 99999
+
+  return df, B
+
+def test_r_vs_py_deterministic(data):
   
   '''
   test compares bootstrapped t-statistics for R and Python 
@@ -27,31 +55,11 @@ def test_r_vs_py_deterministic():
   # to reproduce: search for the commit, run dev notebookm run WCR11 in python
   # etc ...
   
-  from wildboottest.wildboottest import wildboottest, Wildboottest
-  import statsmodels.api as sm
-  import numpy as np
-  import pandas as pd
+  df, B = data, B
+  cluster = df['cluster']
+  X = df[['intercept', 'X1', 'X2']]
+  Y = df['Y']
 
-  np.random.seed(12312)
-  N = 10000
-  k = 3
-  # small sample size -> full enumeration
-  G= 5
-  X = np.random.normal(0, 1, N * k).reshape((N,k))
-  X[:,0] = 1
-  beta = np.random.normal(0,1,k)
-  beta[1] = 0.005
-  u = np.random.normal(0,1,N)
-  Y = X @ beta + u
-  cluster = np.random.choice(list(range(0,G)), N)
-  B = 99999
-  X_df = pd.DataFrame(X)
-  Y_df = pd.DataFrame(Y)
-  cluster_df = pd.DataFrame(cluster)
-  df = pd.concat([X_df, Y_df, cluster_df], axis = 1)  
-  df.columns = ['intercept','X1','X2','Y', 'cluster']
-  #df.to_csv("data/test_df.csv")
-  
   # convert df to an R dataframe
   with localconverter(ro.default_converter + pandas2ri.converter):
     r_df = ro.conversion.py2rpy(df)
@@ -110,10 +118,8 @@ def test_r_vs_py_deterministic():
   assert mse(df['WCU11'].sort_values(), r_df['WCU11'].sort_values()) < 1e-15
   assert mse(df['WCR31'].sort_values(), r_df['WCR31'].sort_values()) < 1e-15
   assert mse(df['WCU31'].sort_values(), r_df['WCU31'].sort_values()) < 1e-15
-
   
-  
-def test_r_vs_py_stochastic():
+def test_r_vs_py_stochastic(data):
   
   '''
   test compares bootstrapped inference for R and Python 
@@ -124,30 +130,11 @@ def test_r_vs_py_stochastic():
   given the same small sample adjustments are applied
   '''
 
-  from wildboottest.wildboottest import wildboottest, Wildboottest
-  import statsmodels.api as sm
-  import numpy as np
-  import pandas as pd
-
-  np.random.seed(7512367)
-  N = 1000
-  k = 3
-  # small sample size -> full enumeration
-  G= 25
-  X = np.random.normal(0, 1, N * k).reshape((N,k))
-  X[:,0] = 1
-  beta = np.random.normal(0,1,k)
-  beta[1] = 0.005
-  u = np.random.normal(0,1,N)
-  Y = X @ beta + u
-  cluster = np.random.choice(list(range(0,G)), N)
-  B = 99999
-  X_df = pd.DataFrame(X)
-  Y_df = pd.DataFrame(Y)
-  cluster_df = pd.DataFrame(cluster)
-  df = pd.concat([X_df, Y_df, cluster_df], axis = 1)  
-  df.columns = ['intercept','X1','X2','Y', 'cluster']
-  
+  df, B = data, B
+  cluster = df['cluster']
+  X = df[['intercept', 'X1', 'X2']]
+  Y = df['Y']
+    
   # convert df to an R dataframe
   with localconverter(ro.default_converter + pandas2ri.converter):
     r_df = ro.conversion.py2rpy(df)
@@ -157,7 +144,8 @@ def test_r_vs_py_stochastic():
 
 
   boot_pvals = []
-  
+  fwildclusterboot_boot_tstats = []
+
   for bootstrap_type in ['11', '31']: 
     for impose_null in [True, False]:
       for weights_type in ['rademacher','mammen', 'webb','norm']:
@@ -188,7 +176,14 @@ def test_r_vs_py_stochastic():
 
   
   # test condition ... 
-
+  fwildclusterboot_boot_tstats.append(list(r_t_boot.rx2("t_boot")))
+      
+  df = pd.DataFrame(np.transpose(np.array(boot_tstats)))
+  df.columns = ['WCR11', 'WCR31', 'WCU11', 'WCU31']
+  
+  # r_df = pd.read_csv("data/test_df_fwc_res.csv")[['WCR11', "WCR31", "WCU11", "WCU31"]]
+  r_df = pd.DataFrame(np.transpose(np.array(fwildclusterboot_boot_tstats)))
+  r_df.columns = ['WCR11', 'WCR31', 'WCU11', 'WCU31']
 
 def test_error_warnings():
   
@@ -201,7 +196,21 @@ def test_error_warnings():
   - know edge cases that lead to errors provide valuable info (e.g. WCR with 
     one param regressions)
   '''
+
+def test_data_is_list(data):
   
+  df = data.values.tolist()
+  
+  boot = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
+  boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null)
+  boot.get_weights(weights_type = weights_type)
+  boot.get_numer()
+  boot.get_denom()
+  boot.get_tboot()
+  boot.get_vcov()
+  boot.get_tstat()
+  boot.get_pvalue(pval_type = pval_type)
+  boot_pvals.append(boot.pvalue)
   
   
 if __name__ == '__main__':
