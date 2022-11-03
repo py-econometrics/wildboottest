@@ -43,6 +43,7 @@ class Wildboottest:
       else:
         clustid = np.unique(cluster)
         bootclustid = np.unique(bootcluster)
+        self.bootcluster = bootcluster
         
       if isinstance(seed, int):
         np.random.seed(seed)
@@ -125,41 +126,45 @@ class Wildboottest:
     
       # precompute required objects for computing scores & vcov's
       if self.bootstrap_type in ["WCR3x", "WCU3x"]: 
-          
+        
+        # beta_hat needed when computing vcov matrix, might be moved down 
+        self.beta_hat = self.tXXinv @ self.tXy
+
         X = self.X
-        X1 = X[:,R != 1]
+        X1 = X[:,self.R != 1]
         X1_list = []
-        tX1gX1g = []
-        tX1gyg = []
-        tXgX1g = []
+        tX1gX1g_list = []
+        tX1gyg_list = []
+        tXgX1g_list = []
         tX1X1 = np.zeros((self.k-1, self.k-1))
         tX1y = np.array(self.k-1)
           
         for ix, g in enumerate(self.bootclustid):
           #ix = g = 1
-          X1_list.append(X1[np.where(bootcluster == g)])
-          tX1gX1g.append(np.transpose(X1_list[ix]) @ X1_list[ix])
-          tX1gyg.append(np.transpose(X1_list[ix]) @ self.Y_list[ix])
-          tXgX1g.append(np.transpose(self.X_list[ix]) @  X1_list[ix])
-          tX1X1 = tX1X1 + tX1gX1g[ix]
-          tX1y = tX1y + tX1gyg[ix]
+          X1_list.append(X1[np.where(self.bootcluster == g)])
+          tX1gX1g_list.append(np.transpose(X1_list[ix]) @ X1_list[ix])
+          tX1gyg_list.append(np.transpose(X1_list[ix]) @ self.Y_list[ix])
+          tXgX1g_list.append(np.transpose(self.X_list[ix]) @  X1_list[ix])
+          tX1X1 = tX1X1 + tX1gX1g_list[ix]
+          tX1y = tX1y + tX1gyg_list[ix]
             
-        self.tX1X1inv = np.invert(tX1X1)
+        tX1X1inv = np.linalg.inv(tX1X1)
         
         if self.bootstrap_type in ["WCR3x"]:
           
+          self.beta_hat = self.tXXinv @ self.tXy
+
           inv_tXX_tXgXg = []
           beta_1g_tilde = []
           
           for ix, g in enumerate(self.bootclustid):
             # use generalized inverse 
             inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
-            beta_1_tilde = np.linalg.pinv(self.tX1X1 - self.tX1gX1g_list[ix]) @ (self.tX1y - self.tX1gyg_list[ix])
-            beta_1g_tilde.append()
-          
+            beta_1g_tilde.append(np.linalg.pinv(tX1X1 - tX1gX1g_list[ix]) @ (tX1y - tX1gyg_list[ix]))
+
           beta = beta_1g_tilde
-          M = self.tXgX1g_list
-            
+          M = tXgX1g_list
+
         elif self.bootstrap_type in ["WCU3x"]: 
             
           beta_g_hat = []
@@ -167,35 +172,39 @@ class Wildboottest:
             beta_g_hat.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]) @ (self.tXy - self.tXgyg_list[ix]))
   
           beta = beta_g_hat
-          M = tXgXg_list
+          M = self.tXgXg_list
           
       elif self.bootstrap_type in ["WCR1x"]: 
             
         self.beta_hat = self.tXXinv @ self.tXy
         A = 1 / (np.transpose(self.R) @ self.tXXinv @ self.R)
-        beta_tilde = self.beta_hat - self.tXXinv @ self.R / A * (self.R @ self.beta_hat - 0)
+        beta_tilde = self.beta_hat - self.tXXinv @ self.R * A * (self.R @ self.beta_hat - 0)
         beta = beta_tilde
         M = self.tXgXg_list
           
       elif self.bootstrap_type in ["WCU1x"]: 
             
-        beta_hat = np.matmul(self.tXXinv, self.tXy)
-        self.beta_hat = beta_hat
-        beta = beta_hat 
+        self.beta_hat = self.tXXinv @ self.tXy
+        beta = self.beta_hat 
         M = self.tXgXg_list
 
-      # compute the list of scores
+      # compute scores based on tXgyg, M, beta
       scores_list = []
-      for ix, g in enumerate(self.bootclustid):
-          # A - B x c
-        if isinstance(M, list):
+      
+      if(self.bootstrap_type in ["WCR1x", "WCU1x"]):
+        
+        for ix, g in enumerate(self.bootclustid):
+        
           scores_list.append(self.tXgyg_list[ix] - M[ix] @ beta)
-        else: 
-          scores_list.append(self.tXgyg_list[ix] - M @ beta)
-
+      
+      elif(self.bootstrap_type in ["WCR3x", "WCU3x"]):
+        
+        for ix, g in enumerate(self.bootclustid):
+        
+          scores_list.append(self.tXgyg_list[ix] - M[ix] @ beta[ix])
+        
       self.scores_mat = np.transpose(np.array(scores_list)) # k x G 
       
-  
   def get_numer(self):
     
       # Calculate the bootstrap numerator
@@ -227,7 +236,7 @@ class Wildboottest:
             for ixg, g in enumerate(bootclustid):
               vH = 0
               for ixh, h in enumerate(bootclustid):
-                vH = vH + v[ixh,b] * H[ixg,ixh]
+                vH += v[ixh,b] * H[ixg,ixh]
               Zg[ixg] = Cg[ixg] * v[ixg,b] - vH
             
             # todo: ssc
@@ -249,7 +258,7 @@ class Wildboottest:
       meat = np.zeros((self.k,self.k))
       for ixg, g in enumerate(self.bootclustid):
         score = np.transpose(self.X_list[ixg]) @ (self.Y_list[ixg] - self.X_list[ixg] @ self.beta_hat)
-        meat = meat + np.outer(score, score)
+        meat += np.outer(score, score)
       
       self.vcov = self.tXXinv @ meat @ self.tXXinv
     
@@ -272,8 +281,85 @@ class Wildboottest:
       self.pvalue = np.mean(self.t_stat < self.t_boot)
     else: 
       self.pvalue = np.mean(self.t_stat > self.t_boot)
+
+class WildDrawFunctionException(Exception):
+    pass
+
+def rademacher(n: int) -> np.ndarray:
+    rng = np.random.default_rng()
+    return rng.choice([-1,1],size=n, replace=True)
+
+def mammen(n: int) -> np.ndarray:
+    rng = np.random.default_rng()
+    return rng.choice(
+        a= np.array([-1, 1]) * (np.sqrt(5) + np.array([-1, 1])) / 2, #TODO: #10 Should this divide the whole expression by 2 or just the second part
+        size=n,
+        replace=True,
+        p = (np.sqrt(5) + np.array([1, -1])) / (2 * np.sqrt(5))
+    )
+    
+def norm(n):
+    rng = np.random.default_rng()
+    return rng.normal(size=n)
+
+def webb(n):
+    rng = np.random.default_rng()
+    return rng.choice(
+        a = np.concatenate([-np.sqrt(np.array([3,2,1]) / 2), np.sqrt(np.array([1,2,3]) / 2)]),
+        replace=True,
+        size=n
+    )
+    
+wild_draw_fun_dict = {
+    'rademacher' : rademacher,
+    'mammen' : mammen,
+    'norm' : norm,
+    'webb' : webb
+}
+
   
+def draw_weights(t : str, full_enumeration: bool, N_G_bootcluster: int, boot_iter: int) -> np.ndarray:
+    """draw bootstrap weights
+    Args:
+        t (str): the type of the weights distribution. Either 'rademacher', 'mammen', 'norm' or 'webb'
+        full_enumeration (bool): should deterministic full enumeration be employed
+        N_G_bootcluster (int): the number of bootstrap clusters
+        boot_iter (int): the number of bootstrap iterations
+    Returns:
+        np.ndarray: a matrix of dimension N_G_bootcluster x (boot_iter + 1)
+    """    
+    
+    #TODO: we can use the `case` feature in python, but that's only available in 3.10+ will do a 3.7 version for now
+    # Will take out this and make separate functions for readability
+    
+    wild_draw_fun = wild_draw_fun_dict.get(t)
+    
+    if wild_draw_fun is None:
+        raise WildDrawFunctionException("Function type specified is not supported or there is a typo.")
+  
+    # do full enumeration for rademacher weights if bootstrap iterations
+    # B exceed number of possible permutations else random sampling
+
+    # full_enumeration only for rademacher weights (set earlier)
+    if full_enumeration: 
+        t = 0 # what is this needed for? 
+        # with N_G_bootcluster draws, get all combinations of [-1,1] WITH 
+        # replacement, in matrix form
+        v0 = np.transpose(np.array(list(product([-1,1], repeat=N_G_bootcluster))))
+    else:
+        # else: just draw with replacement - by chance, some permutations
+        # might occur more than once
+        v0 = wild_draw_fun(n = N_G_bootcluster * boot_iter)
+        v0 = v0.reshape(N_G_bootcluster, boot_iter) # weights matrix
+    
+    # update boot_iter (B) - only relevant in enumeration case
+    boot_iter = v0.shape[1] 
+    v = np.insert(v0, 0, 1,axis = 1)
+
+    return [v, boot_iter]
+
 def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',impose_null = True, bootstrap_type = '11', seed = None):
+
   
   '''
   Run a wild cluster bootstrap based on an object of class 'statsmodels.regression.linear_model.OLS'
@@ -296,24 +382,27 @@ def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',im
     
   Example: 
     
+    from wildboottest.wildboottest import wildboottest
     import statsmodels.api as sm
     import numpy as np
-
+    import pandas as pd
+    
     np.random.seed(12312312)
     N = 1000
     k = 10
-    G= 10
+    G = 10
     X = np.random.normal(0, 1, N * k).reshape((N,k))
+    X = pd.DataFrame(X)
+    X.rename(columns = {0:"X1"}, inplace = True)
     beta = np.random.normal(0,1,k)
     beta[0] = 0.005
     u = np.random.normal(0,1,N)
     Y = 1 + X @ beta + u
     cluster = np.random.choice(list(range(0,G)), N)
-
     model = sm.OLS(Y, X)
+    wildboottest(model, param = "X1", cluster = cluster, B = 9999)
+    wildboottest(model, cluster = cluster, B = 9999)
 
-    boottest(model, param = "X1", cluster = cluster, B = 9999)
-    
   '''
 
   # does model.exog already exclude missing values?
@@ -355,18 +444,25 @@ def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',im
     
     pvalues.append(boot.pvalue)
     tstats.append(boot.t_stat)
-    
+  
     return pvalues, tstats
     
   if param is None:
     for x in xnames:
       pvalues, tstats = generate_stats(x)
+    param = xnames
   elif isinstance(param, str):
     pvalues, tstats = generate_stats(param)
   else:
     raise Exception("`param` not correctly specified")
   
-  return np.array(pvalues), np.array(tstats).flatten()
+  res = {
+    'param': param,
+    'statistic': tstats,
+    'p-value': pvalues
+  }
+  
+  return pd.DataFrame(res)
   
 if __name__ == '__main__':
     import statsmodels.api as sm
@@ -400,9 +496,3 @@ if __name__ == '__main__':
                           'impose_null' : True, 
                           'bootstrap_type' : '11', 
                           'seed' : None}).summary())
-  
-    
-    
-
-    # boottest(model, param = "X1", cluster = cluster, B = 9999)
-    
