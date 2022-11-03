@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from wildboottest.wildboottest import wildboottest, Wildboottest
+from wildboottest.wildboottest import wildboottest, Wildboottest, wild_draw_fun_dict
 import statsmodels.api as sm
 import numpy as np
 import pandas as pd
@@ -14,6 +14,9 @@ from rpy2.robjects.conversion import localconverter
 
 fwildclusterboot = importr("fwildclusterboot")
 stats = importr('stats')
+
+ts = list(wild_draw_fun_dict.keys())
+
 
 @pytest.fixture
 def data():
@@ -55,10 +58,11 @@ def test_r_vs_py_deterministic(data):
   # to reproduce: search for the commit, run dev notebookm run WCR11 in python
   # etc ...
   
-  df, B = data, B
+  df, B = data
   cluster = df['cluster']
   X = df[['intercept', 'X1', 'X2']]
   Y = df['Y']
+  R = np.array([0,1,0])
 
   # convert df to an R dataframe
   with localconverter(ro.default_converter + pandas2ri.converter):
@@ -130,11 +134,12 @@ def test_r_vs_py_stochastic(data):
   given the same small sample adjustments are applied
   '''
 
-  df, B = data, B
+  df, B = data
   cluster = df['cluster']
   X = df[['intercept', 'X1', 'X2']]
   Y = df['Y']
-    
+  R = np.array([0,1,0])
+   
   # convert df to an R dataframe
   with localconverter(ro.default_converter + pandas2ri.converter):
     r_df = ro.conversion.py2rpy(df)
@@ -199,21 +204,43 @@ def test_error_warnings():
 
 def test_data_is_list(data):
   
-  df = data.values.tolist()
+  df, B = data
+  cluster = df['cluster'].values.tolist()
+  X = df[['intercept', 'X1', 'X2']].values.tolist()
+  Y = df['Y'].values.tolist()
+  R = np.array([0,1,0])
+
+  with pytest.raises(TypeError):
+    Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
+
+def test_seeds(data):
   
-  boot = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
-  boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null)
-  boot.get_weights(weights_type = weights_type)
-  boot.get_numer()
-  boot.get_denom()
-  boot.get_tboot()
-  boot.get_vcov()
-  boot.get_tstat()
-  boot.get_pvalue(pval_type = pval_type)
-  boot_pvals.append(boot.pvalue)
+  df, B = data
+  cluster = df['cluster']
+  X = df[['intercept', 'X1', 'X2']]
+  Y = df['Y']
+  R = np.array([0,1,0])
   
+  results_dict = []
+
+  for s in range(1,10000):
+    for w in ts:
+      boot = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = s)
+      boot.get_scores(bootstrap_type = "11", impose_null = True)
+      boot.get_weights(weights_type = w)
+      boot.get_numer()
+      boot.get_denom()
+      boot.get_tboot()
+      boot.get_vcov()
+      boot.get_tstat()
+      boot.get_pvalue(pval_type = "two-tailed")
+      results_dict.append(boot.pvalue)
+        
+  results_series = pd.Series(results_dict)
+  mapd = results_series.mad() / results_series.mean()
+  assert  mapd <= .1 # make sure mean absolute percentage deviation is less than 10% (ad hoc)
   
-if __name__ == '__main__':
-  test_r_vs_py_stochastic()
-  test_r_vs_py_deterministic()
-  test_error_warnings()
+# if __name__ == '__main__':
+#   test_r_vs_py_stochastic()
+#   test_r_vs_py_deterministic()
+#   test_error_warnings()
