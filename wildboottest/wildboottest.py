@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from numba import jit
 from itertools import product
+from weights import draw_weights
 
 class Wildboottest: 
   
@@ -280,10 +281,7 @@ class Wildboottest:
       self.pvalue = np.mean(self.t_stat < self.t_boot)
     else: 
       self.pvalue = np.mean(self.t_stat > self.t_boot)
-      
-      
-      
-      
+
 class WildDrawFunctionException(Exception):
     pass
 
@@ -359,8 +357,7 @@ def draw_weights(t : str, full_enumeration: bool, N_G_bootcluster: int, boot_ite
     v = np.insert(v0, 0, 1,axis = 1)
 
     return [v, boot_iter]
-  
-  
+
 def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',impose_null = True, bootstrap_type = '11', seed = None):
 
   
