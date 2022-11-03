@@ -1,5 +1,4 @@
 import pytest
-from itertools import product
 from wildboottest.weights import WildDrawFunctionException, draw_weights, wild_draw_fun_dict
 from wildboottest.wildboottest import Wildboottest
 import numpy as np

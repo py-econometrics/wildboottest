@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from numba import jit
 from itertools import product
-from weights import draw_weights
+from wildboottest.weights import draw_weights
 
 class Wildboottest: 
   
