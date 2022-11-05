@@ -22,7 +22,7 @@ import pandas as pd
 np.random.seed(12312312)
 N = 1000
 k = 10
-G = 10
+G = 25
 X = np.random.normal(0, 1, N * k).reshape((N,k))
 X = pd.DataFrame(X)
 X.rename(columns = {0:"X1"}, inplace = True)
@@ -35,20 +35,29 @@ cluster = np.random.choice(list(range(0,G)), N)
 # estimation
 model = sm.OLS(Y, X)
 
-wildboottest(model, param = "X1", cluster = cluster, B = 9999)
+wildboottest(model, param = "X1", cluster = cluster, B = 9999, bootstrap_type = "11")
 #   param              statistic   p-value
-# 0    X1  [-0.9161101602560844]  0.414062
+# 0    X1  [-1.0530803154504016]  0.308831
+
+wildboottest(model, param = "X1", cluster = cluster, B = 9999, bootstrap_type = "31")
+#   param              statistic   p-value
+# 0    X1  [-1.0530803154504016]  0.307631
+
+wildboottest(model, param = "X1", cluster = cluster, B = 9999, bootstrap_type = "33")
+#   param              statistic   p-value
+# 0    X1  [-1.0394791020434824]  0.294286
+
 
 wildboottest(model, cluster = cluster, B = 9999)
 #   param              statistic   p-value
-# 0    X1  [-0.9161101602560844]  0.414062
-# 1     1   [-23.47104637779698]  0.000000
-# 2     2   [14.490683161123965]  0.000000
-# 3     3  [-12.622808111755516]  0.000000
-# 4     4   [-19.98559455990591]  0.000000
-# 5     5   [1.4925442694763955]  0.183594
-# 6     6    [7.231015380060432]  0.000000
-# 7     7   [-41.37320307285552]  0.000000
-# 8     8    [17.31090484734575]  0.000000
-# 9     9   [-37.31996125067985]  0.000000
+# 0    X1  [-1.0530803154504016]  0.315132
+# 1     1    [-18.5149486170657]  0.000000
+# 2     2    [7.831855813581191]  0.000000
+# 3     3   [-16.85188951397906]  0.000000
+# 4     4  [-12.721095348008182]  0.000000
+# 5     5    [1.200524160940055]  0.243624
+# 6     6    [6.870946666836135]  0.000000
+# 7     7   [-31.31653422266621]  0.000000
+# 8     8    [10.26443257212472]  0.000000
+# 9     9  [-20.650361366939535]  0.000000
 ```
