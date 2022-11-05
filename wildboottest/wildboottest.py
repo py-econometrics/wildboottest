@@ -170,12 +170,9 @@ class Wildboottest:
           tX1X1 = tX1X1 + tX1gX1g_list[ix]
           tX1y = tX1y + tX1gyg_list[ix]
           
-        inv_tXX_tXgXg = []
         beta_1g_tilde = []
         
         for ix, g in enumerate(self.bootclustid):
-          # use generalized inverse 
-          inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
           beta_1g_tilde.append(np.linalg.pinv(tX1X1 - tX1gX1g_list[ix]) @ (tX1y - tX1gyg_list[ix]))
 
         beta = beta_1g_tilde
@@ -262,11 +259,9 @@ class Wildboottest:
       
       elif self.crv_type == "crv3":
         
-        # already computed for WCR3x in get_scores()
-        if not hasattr(self, "inv_tXX_tXgXg"):
-          self.inv_tXX_tXgXg = []
-          for ix, g in enumerate(self.bootclustid):
-            self.inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
+        self.inv_tXX_tXgXg = []
+        for ix, g in enumerate(self.bootclustid):
+          self.inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
       
         self.denom = np.zeros(self.B + 1)
       
