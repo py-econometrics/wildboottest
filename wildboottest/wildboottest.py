@@ -2,106 +2,124 @@ import numpy as np
 import pandas as pd
 from numba import jit
 from itertools import product
+from wildboottest.weights import draw_weights
+import warnings
+
+class WildDrawFunctionException(Exception):
+    pass
+
+class TestMatrixNonConformabilityException(Exception):
+  pass
 
 class Wildboottest: 
   
   '''
   Create an object of Wildboottest and get p-value by successively applying
   methods in the following way: 
+    
+  wb = Wildboottest(X = X, Y = y, cluster = cluster, R = R, B = B)
+  wb.get_scores(bootstrap_type = "11", impose_null = True)
+  wb.get_numer()
+  wb.get_denom()
+  wb.get_tboot()
+  wb.get_vcov()
+  wb.get_tstat()
+  wb.get_pvalue()  
   
-  from wildboottest.wildboottest import Wildboottest
-  import numpy as np
-  import pandas as pd
+  Later we can replace X, Y, cluster, R with an object estimated via 
+  statsmodels or linearmodels and a "param" values (as in fwildclusterboot::boottest())
   
-  # create data
-  np.random.seed(87523578)
-  N = 1000
-  k = 10
-  G= 25
-  X = np.random.normal(0, 1, N * k).reshape((N,k))
-  beta = np.random.normal(0,1,k)
-  beta[0] = 0.005
-  u = np.random.normal(0,1,N)
-  Y = 1 + X @ beta + u
-  cluster = np.random.choice(list(range(0,G)), N)
-  B = 9999
-  bootcluster = cluster
-  R = np.zeros(k)
-  R[0] = 1
-  wcr = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = bootcluster, R = R, B = B, seed = 12341)
-  wcr.get_scores(bootstrap_type = "11", impose_null = True)
-  wcr.get_weights(weights_type = "rademacher")
-  wcr.get_numer()
-  wcr.get_denom()
-  wcr.get_tboot()
-  wcr.get_vcov()
-  wcr.get_tstat()
-  wcr.get_pvalue(pval_type = "two-tailed")
-  wcr.pvalue
-  wcr.t_boot
-  wcr.t_stat
   '''
   
   def __init__(self, X, Y, cluster, bootcluster, R, B, seed = None):
       
       "Initialize the wildboottest class"
+      #assert bootstrap_type in ['11', '13', '31', '33']
+      #assert impose_null in [True, False]
+      
+      for i in [X, Y, cluster, bootcluster]:
+        if isinstance(i, list):
+          raise TypeError(f"{i} cannot be a list")
 
-      if isinstance(X, pd.DataFrame):
+      if isinstance(X, (pd.DataFrame, pd.Series)):
         self.X = X.values
-      if isinstance(Y, pd.DataFrame):
+      else:
+        self.X = X
+        
+      if isinstance(Y, (pd.DataFrame, pd.Series)):
         self.Y = Y.values
+      else:
+        self.Y = Y
+        
       if isinstance(cluster, pd.DataFrame):
-        self.clustid = cluster.unique()
+        clustid = cluster.unique()
         self.cluster = cluster.values
       if isinstance(bootcluster, pd.DataFrame):
-        self.bootclustid = bootcluster.unique()
+        bootclustid = bootcluster.unique()
         self.bootcluster = bootcluster.values
       else:
-        self.clustid = np.unique(cluster)
-        self.bootclustid = np.unique(bootcluster)
+        clustid = np.unique(cluster)
+        bootclustid = np.unique(bootcluster)
         self.bootcluster = bootcluster
         
       if isinstance(seed, int):
         np.random.seed(seed)
 
-      self.N_G_bootcluster = len(self.bootclustid)
-      self.G = len(self.clustid)
+      self.N_G_bootcluster = len(bootclustid)
+      self.G  = len(clustid)
 
-      self.k = R.shape[0]
+      self.k = X.shape[1]
       self.B = B
-      self.X = X
       self.R = R
-    
-      self.X_list = []
-      self.Y_list = []
-      self.tXgXg_list = []
-      self.tXgyg_list = []
-      self.tXX = np.zeros((self.k, self.k))
-      self.tXy = np.zeros(self.k)
       
-      for ix, g in enumerate(self.bootclustid):
+      if self.X.shape[1] != self.R.shape[0]:
+        raise TestMatrixNonConformabilityException("The number of rows in the test matrix R, does not ")
+      
+      self.ssc = 1
+      
+      X_list = []
+      y_list = []
+      tXgXg_list = []
+      tXgyg_list = []
+      tXX = np.zeros((self.k, self.k))
+      tXy = np.zeros(self.k)
+      
+      #all_cluster = np.unique(bootcluster)
+      
+      for g in bootclustid:
         
         # split X and Y by (boot)cluster
-        X_g = X[np.where(bootcluster == g)]
-        Y_g = Y[np.where(bootcluster == g)]
+        X_g = self.X[np.where(bootcluster == g)]
+        Y_g = self.Y[np.where(bootcluster == g)]
         tXgXg = np.transpose(X_g) @ X_g
         tXgyg = np.transpose(X_g) @ Y_g
-        self.X_list.append(X_g)
-        self.Y_list.append(Y_g)
-        self.tXgXg_list.append(tXgXg)
-        self.tXgyg_list.append(tXgyg)
-        self.tXX += tXgXg
-        self.tXy += tXgyg
+        X_list.append(X_g)
+        y_list.append(Y_g)
+        tXgXg_list.append(tXgXg)
+        tXgyg_list.append(tXgyg)
+        tXX = tXX + tXgXg
+        tXy = tXy + tXgyg
       
-      self.tXXinv = np.linalg.inv(self.tXX)
-      self.RtXXinv = np.matmul(R, self.tXXinv)
-
+      self.clustid = clustid
+      self.bootclustid = bootclustid
+      self.X_list = X_list
+      self.Y_list = y_list
+      self.tXgXg_list = tXgXg_list
+      self.tXgyg_list = tXgyg_list
+      self.tXX = tXX
+      self.tXy = tXy
+        
+      tXXinv = np.linalg.inv(tXX)
+      self.RtXXinv = np.matmul(R, tXXinv)
+      self.tXXinv = tXXinv 
+      
   def get_weights(self, weights_type):
     
     self.weights_type = weights_type 
     
-    if 2**self.N_G_bootcluster < self.B:
+    if 2**self.N_G_bootcluster < self.B and weights_type=='rademacher':
       self.full_enumeration = True
+      warnings.warn("2^G < the number of boot iterations, setting full_enumeration to True.")
     else: 
       self.full_enumeration = False
       
@@ -119,15 +137,15 @@ class Wildboottest:
         self.ssc = 1
       elif bootstrap_type[1:2] == '3':
         self.crv_type = "crv3"
-        self.ssc = (self.G  - 1) / self.G
-        
+        self.ssc = (self.G - 1) / self.G
+
       bootstrap_type_x = bootstrap_type[0:1] + 'x'
 
       if impose_null == True:
         self.bootstrap_type = "WCR" + bootstrap_type_x
       else:
         self.bootstrap_type = "WCU" + bootstrap_type_x
-        
+    
       # precompute required objects for computing scores & vcov's
       if self.bootstrap_type in ["WCR3x", "WCU3x"]: 
         
@@ -158,12 +176,12 @@ class Wildboottest:
           
           self.beta_hat = self.tXXinv @ self.tXy
 
-          self.inv_tXX_tXgXg = []
+          inv_tXX_tXgXg = []
           beta_1g_tilde = []
           
           for ix, g in enumerate(self.bootclustid):
             # use generalized inverse 
-            self.inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
+            inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
             beta_1g_tilde.append(np.linalg.pinv(tX1X1 - tX1gX1g_list[ix]) @ (tX1y - tX1gyg_list[ix]))
 
           beta = beta_1g_tilde
@@ -191,7 +209,7 @@ class Wildboottest:
         self.beta_hat = self.tXXinv @ self.tXy
         beta = self.beta_hat 
         M = self.tXgXg_list
-        
+
       # compute scores based on tXgyg, M, beta
       scores_list = []
       
@@ -254,42 +272,39 @@ class Wildboottest:
         
         # already computed for WCR3x in get_scores()
         if not hasattr(self, "inv_tXX_tXgXg"):
-            
           self.inv_tXX_tXgXg = []
-
-          for ix, g in enumerate(self.bootclustid):
-            # use generalized inverse 
-            self.inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
-
+      
+        for ix, g in enumerate(self.bootclustid):
+          # use generalized inverse 
+          self.inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
+      
         self.denom = np.zeros(self.B + 1)
-
+      
         for b in range(0, self.B + 1):
-          
+        
           scores_g_boot = np.zeros((self.G, self.k))
           v_ = self.v[:,b]
-          
+      
           for ixg, g in enumerate(self.bootclustid):
-            
+        
             scores_g_boot[ixg,:] = self.scores_mat[:,ixg] * v_[ixg]
-            
+      
           scores_boot = np.sum(scores_g_boot, axis = 0)
           delta_b_star = self.tXXinv @ scores_boot
-          
+      
           delta_diff = np.zeros((self.G, self.k))
-          
+      
           for ixg, g in enumerate(self.bootclustid):
-            
+        
             score_diff = scores_boot - scores_g_boot[ixg,:]
             delta_diff[ixg,:] = (
-              
+        
               (self.inv_tXX_tXgXg[ixg] @ score_diff - delta_b_star)**2
-              
-            )
-            
+        
+              )
           # se's
           self.denom[b] = self.ssc * np.sum(delta_diff, axis = 0)[np.where(self.R == 1)]
-
-        
+      
       
   def get_tboot(self):
     
@@ -308,14 +323,14 @@ class Wildboottest:
       self.vcov = self.tXXinv @ meat @ self.tXXinv
       
     elif self.crv_type == "crv3": 
-      
+  
       # calculate leave-one out beta hat
       beta_jack = np.zeros((self.G, self.k))
       for ixg, g in enumerate(self.bootclustid):
         beta_jack[ixg,:] = (
           np.linalg.pinv(self.tXX - self.tXgXg_list[ixg]) @ (self.tXy - np.transpose(self.X_list[ixg]) @ self.Y_list[ixg])
         )
-      
+    
       if not hasattr(self, "beta_hat"):
         beta_hat = self.tXXinv @ self.tXy
       
@@ -323,11 +338,11 @@ class Wildboottest:
       
       vcov3 = np.zeros((self.k, self.k))
       for ixg, g in enumerate(self.bootclustid):
-          beta_centered = beta_jack[ixg,:] - beta_center
-          vcov3 += np.outer(beta_centered, beta_centered)
-          
-      self.vcov =  vcov3
+        beta_centered = beta_jack[ixg,:] - beta_center
+        vcov3 += np.outer(beta_centered, beta_centered)
       
+      self.vcov =  vcov3
+    
         
   def get_tstat(self):
         
@@ -347,87 +362,8 @@ class Wildboottest:
       self.pvalue = np.mean(self.t_stat < self.t_boot)
     else: 
       self.pvalue = np.mean(self.t_stat > self.t_boot)
-      
-      
-      
-      
-class WildDrawFunctionException(Exception):
-    pass
 
-def rademacher(n: int) -> np.ndarray:
-    rng = np.random.default_rng()
-    return rng.choice([-1,1],size=n, replace=True)
 
-def mammen(n: int) -> np.ndarray:
-    rng = np.random.default_rng()
-    return rng.choice(
-        a= np.array([-1, 1]) * (np.sqrt(5) + np.array([-1, 1])) / 2, #TODO: #10 Should this divide the whole expression by 2 or just the second part
-        size=n,
-        replace=True,
-        p = (np.sqrt(5) + np.array([1, -1])) / (2 * np.sqrt(5))
-    )
-    
-def norm(n):
-    rng = np.random.default_rng()
-    return rng.normal(size=n)
-
-def webb(n):
-    rng = np.random.default_rng()
-    return rng.choice(
-        a = np.concatenate([-np.sqrt(np.array([3,2,1]) / 2), np.sqrt(np.array([1,2,3]) / 2)]),
-        replace=True,
-        size=n
-    )
-    
-wild_draw_fun_dict = {
-    'rademacher' : rademacher,
-    'mammen' : mammen,
-    'norm' : norm,
-    'webb' : webb
-}
-
-  
-def draw_weights(t : str, full_enumeration: bool, N_G_bootcluster: int, boot_iter: int) -> np.ndarray:
-    """draw bootstrap weights
-    Args:
-        t (str): the type of the weights distribution. Either 'rademacher', 'mammen', 'norm' or 'webb'
-        full_enumeration (bool): should deterministic full enumeration be employed
-        N_G_bootcluster (int): the number of bootstrap clusters
-        boot_iter (int): the number of bootstrap iterations
-    Returns:
-        np.ndarray: a matrix of dimension N_G_bootcluster x (boot_iter + 1)
-    """    
-    
-    #TODO: we can use the `case` feature in python, but that's only available in 3.10+ will do a 3.7 version for now
-    # Will take out this and make separate functions for readability
-    
-    wild_draw_fun = wild_draw_fun_dict.get(t)
-    
-    if wild_draw_fun is None:
-        raise WildDrawFunctionException("Function type specified is not supported or there is a typo.")
-  
-    # do full enumeration for rademacher weights if bootstrap iterations
-    # B exceed number of possible permutations else random sampling
-
-    # full_enumeration only for rademacher weights (set earlier)
-    if full_enumeration: 
-        t = 0 # what is this needed for? 
-        # with N_G_bootcluster draws, get all combinations of [-1,1] WITH 
-        # replacement, in matrix form
-        v0 = np.transpose(np.array(list(product([-1,1], repeat=N_G_bootcluster))))
-    else:
-        # else: just draw with replacement - by chance, some permutations
-        # might occur more than once
-        v0 = wild_draw_fun(n = N_G_bootcluster * boot_iter)
-        v0 = v0.reshape(N_G_bootcluster, boot_iter) # weights matrix
-    
-    # update boot_iter (B) - only relevant in enumeration case
-    boot_iter = v0.shape[1] 
-    v = np.insert(v0, 0, 1,axis = 1)
-
-    return [v, boot_iter]
-  
-  
 def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',impose_null = True, bootstrap_type = '11', seed = None):
 
   
