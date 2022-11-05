@@ -159,7 +159,7 @@ class Wildboottest:
         tX1gyg_list = []
         tXgX1g_list = []
         tX1X1 = np.zeros((self.k-1, self.k-1))
-        tX1y = np.array(self.k-1)
+        tX1y = np.zeros(self.k-1)
           
         for ix, g in enumerate(self.bootclustid):
           #ix = g = 1
