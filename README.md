@@ -14,7 +14,7 @@ If you'd like to cooperate, either send us an
 
 Note: everything is still very much work in progress. 
 
-```{python}
+```python
 from wildboottest.wildboottest import wildboottest
 import statsmodels.api as sm
 import numpy as np
