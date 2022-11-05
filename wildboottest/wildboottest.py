@@ -68,14 +68,13 @@ class Wildboottest:
       self.N_G_bootcluster = len(bootclustid)
       self.G  = len(clustid)
 
+      self.N = X.shape[0]
       self.k = X.shape[1]
       self.B = B
       self.R = R
       
       if self.X.shape[1] != self.R.shape[0]:
         raise TestMatrixNonConformabilityException("The number of rows in the test matrix R, does not ")
-      
-      self.ssc = 1
       
       X_list = []
       y_list = []
