@@ -130,11 +130,15 @@ class Wildboottest:
       boot_iter = self.B
     )  
     
-  def get_scores(self, bootstrap_type, impose_null):
+  def get_scores(self, bootstrap_type, impose_null, adj = True, cluster_adj = True):
     
       if bootstrap_type[1:2] == '1':
         self.crv_type = "crv1"
         self.ssc = 1
+        if(adj == True):
+          self.ssc = self.ssc * (self.N - 1) / (self.N - self.k)
+        if(cluster_adj == True):
+          self.ssc = self.ssc * self.G / (self.G - 1)
       elif bootstrap_type[1:2] == '3':
         self.crv_type = "crv3"
         self.ssc = (self.G - 1) / self.G
