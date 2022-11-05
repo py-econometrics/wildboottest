@@ -2,7 +2,14 @@ import numpy as np
 import pandas as pd
 from numba import jit
 from itertools import product
-from weights import draw_weights
+from wildboottest.weights import draw_weights
+import warnings
+
+class WildDrawFunctionException(Exception):
+    pass
+
+class TestMatrixNonConformabilityException(Exception):
+  pass
 
 class Wildboottest: 
   
@@ -29,11 +36,21 @@ class Wildboottest:
       "Initialize the wildboottest class"
       #assert bootstrap_type in ['11', '13', '31', '33']
       #assert impose_null in [True, False]
+      
+      for i in [X, Y, cluster, bootcluster]:
+        if isinstance(i, list):
+          raise TypeError(f"{i} cannot be a list")
 
-      if isinstance(X, pd.DataFrame):
+      if isinstance(X, (pd.DataFrame, pd.Series)):
         self.X = X.values
-      if isinstance(Y, pd.DataFrame):
+      else:
+        self.X = X
+        
+      if isinstance(Y, (pd.DataFrame, pd.Series)):
         self.Y = Y.values
+      else:
+        self.Y = Y
+        
       if isinstance(cluster, pd.DataFrame):
         clustid = cluster.unique()
         self.cluster = cluster.values
@@ -51,10 +68,12 @@ class Wildboottest:
       self.N_G_bootcluster = len(bootclustid)
       self.G  = len(clustid)
 
-      self.k = R.shape[0]
+      self.k = X.shape[1]
       self.B = B
-      self.X = X
       self.R = R
+      
+      if self.X.shape[1] != self.R.shape[0]:
+        raise TestMatrixNonConformabilityException("The number of rows in the test matrix R, does not ")
       
       self.ssc = 1
       
@@ -70,8 +89,8 @@ class Wildboottest:
       for g in bootclustid:
         
         # split X and Y by (boot)cluster
-        X_g = X[np.where(bootcluster == g)]
-        Y_g = Y[np.where(bootcluster == g)]
+        X_g = self.X[np.where(bootcluster == g)]
+        Y_g = self.Y[np.where(bootcluster == g)]
         tXgXg = np.transpose(X_g) @ X_g
         tXgyg = np.transpose(X_g) @ Y_g
         X_list.append(X_g)
@@ -98,8 +117,9 @@ class Wildboottest:
     
     self.weights_type = weights_type 
     
-    if 2**self.N_G_bootcluster < self.B:
+    if 2**self.N_G_bootcluster < self.B and weights_type=='rademacher':
       self.full_enumeration = True
+      warnings.warn("2^G < the number of boot iterations, setting full_enumeration to True.")
     else: 
       self.full_enumeration = False
       
@@ -282,9 +302,6 @@ class Wildboottest:
     else: 
       self.pvalue = np.mean(self.t_stat > self.t_boot)
 
-class WildDrawFunctionException(Exception):
-    pass
-
 def rademacher(n: int) -> np.ndarray:
     rng = np.random.default_rng()
     return rng.choice([-1,1],size=n, replace=True)
@@ -339,7 +356,7 @@ def draw_weights(t : str, full_enumeration: bool, N_G_bootcluster: int, boot_ite
   
     # do full enumeration for rademacher weights if bootstrap iterations
     # B exceed number of possible permutations else random sampling
-
+    
     # full_enumeration only for rademacher weights (set earlier)
     if full_enumeration: 
         t = 0 # what is this needed for? 
