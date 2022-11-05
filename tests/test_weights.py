@@ -1,5 +1,4 @@
 import pytest
-from itertools import product
 from wildboottest.weights import WildDrawFunctionException, draw_weights, wild_draw_fun_dict
 from wildboottest.wildboottest import Wildboottest
 import numpy as np
@@ -55,8 +54,13 @@ def test_different_weights(data):
         boot.get_tboot()
         boot.get_vcov()
         boot.get_tstat()
-        results_dict[w] = boot.get_pvalue(pval_type = "two-tailed")
+        boot.get_pvalue(pval_type = "two-tailed")
+        results_dict[w] = boot.pvalue
         
-    df = pd.DataFrame(results_dict)
+    results_series = pd.Series(results_dict)
+        
+    mapd = results_series.mad() / results_series.mean()
+        
+    assert  mapd <= .1 # make sure mean absolute percentage deviation is less than 10% (ad hoc)
     
     
