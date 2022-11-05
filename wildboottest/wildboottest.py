@@ -52,21 +52,21 @@ class Wildboottest:
         self.Y = Y
         
       if isinstance(cluster, pd.DataFrame):
-        clustid = cluster.unique()
+        self.clustid = cluster.unique()
         self.cluster = cluster.values
       if isinstance(bootcluster, pd.DataFrame):
-        bootclustid = bootcluster.unique()
+        self.bootclustid = bootcluster.unique()
         self.bootcluster = bootcluster.values
       else:
-        clustid = np.unique(cluster)
-        bootclustid = np.unique(bootcluster)
+        self.clustid = np.unique(cluster)
+        self.bootclustid = np.unique(bootcluster)
         self.bootcluster = bootcluster
         
       if isinstance(seed, int):
         np.random.seed(seed)
 
-      self.N_G_bootcluster = len(bootclustid)
-      self.G  = len(clustid)
+      self.N_G_bootcluster = len(self.bootclustid)
+      self.G  = len(self.clustid)
 
       self.N = X.shape[0]
       self.k = X.shape[1]
@@ -85,11 +85,11 @@ class Wildboottest:
       
       #all_cluster = np.unique(bootcluster)
       
-      for g in bootclustid:
+      for g in self.bootclustid:
         
         # split X and Y by (boot)cluster
-        X_g = self.X[np.where(bootcluster == g)]
-        Y_g = self.Y[np.where(bootcluster == g)]
+        X_g = self.X[np.where(self.bootcluster == g)]
+        Y_g = self.Y[np.where(self.bootcluster == g)]
         tXgXg = np.transpose(X_g) @ X_g
         tXgyg = np.transpose(X_g) @ Y_g
         X_list.append(X_g)
@@ -99,8 +99,6 @@ class Wildboottest:
         tXX = tXX + tXgXg
         tXy = tXy + tXgyg
       
-      self.clustid = clustid
-      self.bootclustid = bootclustid
       self.X_list = X_list
       self.Y_list = y_list
       self.tXgXg_list = tXgXg_list
@@ -108,9 +106,8 @@ class Wildboottest:
       self.tXX = tXX
       self.tXy = tXy
         
-      tXXinv = np.linalg.inv(tXX)
-      self.RtXXinv = np.matmul(R, tXXinv)
-      self.tXXinv = tXXinv 
+      self.tXXinv = np.linalg.inv(tXX)
+      self.RtXXinv = np.matmul(R, self.tXXinv)
       
   def get_weights(self, weights_type):
     
