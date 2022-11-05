@@ -96,8 +96,7 @@ def test_r_vs_py_deterministic():
         clustid = ro.Formula("~cluster"),
         B=99999,
         bootstrap_type=bootstrap_type,
-        impose_null=impose_null,
-        ssc=fwildclusterboot.boot_ssc(adj=False, cluster_adj=False)
+        impose_null=impose_null
       )
       
       fwildclusterboot_boot_tstats.append(list(r_t_boot.rx2("t_boot")))
