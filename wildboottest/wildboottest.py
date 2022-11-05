@@ -149,14 +149,14 @@ class Wildboottest:
       else:
         self.bootstrap_type = "WCU" + bootstrap_type_x
     
-      # precompute required objects for computing scores & vcov's
-      if self.bootstrap_type in ["WCR3x", "WCU3x"]: 
-        
-        # beta_hat needed when computing vcov matrix, might be moved down 
-        self.beta_hat = self.tXXinv @ self.tXy
+      # not needed for all types, but compute anyways
+      self.beta_hat = self.tXXinv @ self.tXy
 
+      # precompute required objects for computing scores & vcov's
+      if self.bootstrap_type in ["WCR3x"]: 
+        
         X = self.X
-        X1 = X[:,self.R != 1]
+        X1 = X[:,self.R == 0]
         X1_list = []
         tX1gX1g_list = []
         tX1gyg_list = []
@@ -172,36 +172,29 @@ class Wildboottest:
           tXgX1g_list.append(np.transpose(self.X_list[ix]) @  X1_list[ix])
           tX1X1 = tX1X1 + tX1gX1g_list[ix]
           tX1y = tX1y + tX1gyg_list[ix]
-            
-        tX1X1inv = np.linalg.inv(tX1X1)
+          
+        inv_tXX_tXgXg = []
+        beta_1g_tilde = []
         
-        if self.bootstrap_type in ["WCR3x"]:
-          
-          self.beta_hat = self.tXXinv @ self.tXy
+        for ix, g in enumerate(self.bootclustid):
+          # use generalized inverse 
+          inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
+          beta_1g_tilde.append(np.linalg.pinv(tX1X1 - tX1gX1g_list[ix]) @ (tX1y - tX1gyg_list[ix]))
 
-          inv_tXX_tXgXg = []
-          beta_1g_tilde = []
-          
-          for ix, g in enumerate(self.bootclustid):
-            # use generalized inverse 
-            inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
-            beta_1g_tilde.append(np.linalg.pinv(tX1X1 - tX1gX1g_list[ix]) @ (tX1y - tX1gyg_list[ix]))
+        beta = beta_1g_tilde
+        M = tXgX1g_list
 
-          beta = beta_1g_tilde
-          M = tXgX1g_list
-
-        elif self.bootstrap_type in ["WCU3x"]: 
+      elif self.bootstrap_type in ["WCU3x"]: 
             
-          beta_g_hat = []
-          for ix, g in enumerate(self.bootclustid):
-            beta_g_hat.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]) @ (self.tXy - self.tXgyg_list[ix]))
+        beta_g_hat = []
+        for ix, g in enumerate(self.bootclustid):
+          beta_g_hat.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]) @ (self.tXy - self.tXgyg_list[ix]))
   
-          beta = beta_g_hat
-          M = self.tXgXg_list
+        beta = beta_g_hat
+        M = self.tXgXg_list
           
       elif self.bootstrap_type in ["WCR1x"]: 
             
-        self.beta_hat = self.tXXinv @ self.tXy
         A = 1 / (np.transpose(self.R) @ self.tXXinv @ self.R)
         beta_tilde = self.beta_hat - self.tXXinv @ self.R * A * (self.R @ self.beta_hat - 0)
         beta = beta_tilde
@@ -209,7 +202,6 @@ class Wildboottest:
           
       elif self.bootstrap_type in ["WCU1x"]: 
             
-        self.beta_hat = self.tXXinv @ self.tXy
         beta = self.beta_hat 
         M = self.tXgXg_list
 
@@ -276,10 +268,8 @@ class Wildboottest:
         # already computed for WCR3x in get_scores()
         if not hasattr(self, "inv_tXX_tXgXg"):
           self.inv_tXX_tXgXg = []
-      
-        for ix, g in enumerate(self.bootclustid):
-          # use generalized inverse 
-          self.inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
+          for ix, g in enumerate(self.bootclustid):
+            self.inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
       
         self.denom = np.zeros(self.B + 1)
       
