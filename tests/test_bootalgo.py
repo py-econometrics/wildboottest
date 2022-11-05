@@ -1,7 +1,8 @@
 import pytest
 import numpy as np
 
-from wildboottest.wildboottest import wildboottest, Wildboottest, wild_draw_fun_dict
+from wildboottest.wildboottest import wildboottest, Wildboottest
+from wildboottest.weights import wild_draw_fun_dict
 import statsmodels.api as sm
 import numpy as np
 import pandas as pd
@@ -220,9 +221,9 @@ def test_error_warnings():
     one param regressions)
   '''
 
-def test_data_is_list(data):
+def test_data_is_list():
   
-  df, B = data
+  df, B = data(15)
   cluster = df['cluster'].values.tolist()
   X = df[['intercept', 'X1', 'X2']].values.tolist()
   Y = df['Y'].values.tolist()
@@ -231,9 +232,9 @@ def test_data_is_list(data):
   with pytest.raises(TypeError):
     Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
 
-def test_seeds(data):
+def test_seeds():
   
-  df, B = data
+  df, B = data(15)
   cluster = df['cluster']
   X = df[['intercept', 'X1', 'X2']]
   Y = df['Y']

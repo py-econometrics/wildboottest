@@ -31,12 +31,15 @@ class Wildboottest:
   
   '''
   
-  def __init__(self, X, Y, cluster, bootcluster, R, B, seed = None):
+  def __init__(self, X, Y, cluster, R, B, bootcluster = None, seed = None):
       
       "Initialize the wildboottest class"
       #assert bootstrap_type in ['11', '13', '31', '33']
       #assert impose_null in [True, False]
       
+      if bootcluster is None: 
+        bootcluster = cluster
+
       for i in [X, Y, cluster, bootcluster]:
         if isinstance(i, list):
           raise TypeError(f"{i} cannot be a list")
@@ -417,11 +420,8 @@ def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',im
     # is it possible to fetch the clustering variables from the pre-processed data 
     # frame, e.g. with 'excluding' observations with missings etc
     # cluster = ...
-    
-    # set bootcluster == cluster for one-way clustering
-    bootcluster = cluster
-    
-    boot = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = bootcluster, 
+        
+    boot = Wildboottest(X = X, Y = Y, cluster = cluster, 
                         R = R, B = B, seed = seed)
     boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null)
     boot.get_weights(weights_type = weights_type)
