@@ -18,13 +18,11 @@ stats = importr('stats')
 ts = list(wild_draw_fun_dict.keys())
 
 
-@pytest.fixture
-def data():
+def data(G):
   np.random.seed(12312)
   N = 10000
   k = 3
   # small sample size -> full enumeration
-  G= 5
   X = np.random.normal(0, 1, N * k).reshape((N,k))
   X[:,0] = 1
   beta = np.random.normal(0,1,k)
@@ -41,7 +39,10 @@ def data():
 
   return df, B
 
-def test_r_vs_py_deterministic(data):
+
+
+
+def test_r_vs_py_deterministic():
   
   '''
   test compares bootstrapped t-statistics for R and Python 
@@ -58,7 +59,7 @@ def test_r_vs_py_deterministic(data):
   # to reproduce: search for the commit, run dev notebookm run WCR11 in python
   # etc ...
   
-  df, B = data
+  df, B = data(5)
   cluster = df['cluster']
   X = df[['intercept', 'X1', 'X2']]
   Y = df['Y']
@@ -123,7 +124,7 @@ def test_r_vs_py_deterministic(data):
   assert mse(df['WCR31'].sort_values(), r_df['WCR31'].sort_values()) < 1e-15
   assert mse(df['WCU31'].sort_values(), r_df['WCU31'].sort_values()) < 1e-15
   
-def test_r_vs_py_stochastic(data):
+def test_r_vs_py_stochastic():
   
   '''
   test compares bootstrapped inference for R and Python 
@@ -134,7 +135,7 @@ def test_r_vs_py_stochastic(data):
   given the same small sample adjustments are applied
   '''
 
-  df, B = data
+  df, B = data(25)
   cluster = df['cluster']
   X = df[['intercept', 'X1', 'X2']]
   Y = df['Y']
@@ -176,6 +177,8 @@ def test_r_vs_py_stochastic(data):
             B=99999,
             bootstrap_type=bootstrap_type,
             impose_null=impose_null,
+            p_val_type = pval_type, 
+            type = weights_type,
             ssc=fwildclusterboot.boot_ssc(adj=False, cluster_adj=False)
           )
 
