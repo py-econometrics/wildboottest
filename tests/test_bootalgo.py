@@ -75,7 +75,7 @@ def test_r_vs_py_deterministic():
   boot_tstats = []
   fwildclusterboot_boot_tstats = []
   
-  for bootstrap_type in ['11', '31']: 
+  for bootstrap_type in ['11', '31', '31', '33']: 
     for impose_null in [True, False]:
       # python implementation
       boot = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
@@ -103,11 +103,11 @@ def test_r_vs_py_deterministic():
       fwildclusterboot_boot_tstats.append(list(r_t_boot.rx2("t_boot")))
       
   df = pd.DataFrame(np.transpose(np.array(boot_tstats)))
-  df.columns = ['WCR11', 'WCR31', 'WCU11', 'WCU31']
+  df.columns = ['WCR11', 'WCU11', 'WCR31', 'WCU31', 'WCR13', 'WCU13', 'WCR33', 'WCU33']
   
   # r_df = pd.read_csv("data/test_df_fwc_res.csv")[['WCR11', "WCR31", "WCU11", "WCU31"]]
   r_df = pd.DataFrame(np.transpose(np.array(fwildclusterboot_boot_tstats)))
-  r_df.columns = ['WCR11', 'WCR31', 'WCU11', 'WCU31']
+  r_df.columns = ['WCR11', 'WCU11', 'WCR31', 'WCU31', 'WCR13', 'WCU13', 'WCR33', 'WCU33']
   
   # all values need to be sorted
   print("Python")
@@ -123,7 +123,11 @@ def test_r_vs_py_deterministic():
   assert mse(df['WCU11'].sort_values(), r_df['WCU11'].sort_values()) < 1e-15
   assert mse(df['WCR31'].sort_values(), r_df['WCR31'].sort_values()) < 1e-15
   assert mse(df['WCU31'].sort_values(), r_df['WCU31'].sort_values()) < 1e-15
-  
+  assert mse(df['WCR13'].sort_values(), r_df['WCR13'].sort_values()) < 1e-15
+  assert mse(df['WCU13'].sort_values(), r_df['WCU13'].sort_values()) < 1e-15
+  assert mse(df['WCR33'].sort_values(), r_df['WCR33'].sort_values()) < 1e-15
+  assert mse(df['WCU33'].sort_values(), r_df['WCU33'].sort_values()) < 1e-15
+
 def test_r_vs_py_stochastic():
   
   '''
@@ -152,7 +156,7 @@ def test_r_vs_py_stochastic():
   boot_pvals = []
   fwildclusterboot_boot_pvals = []
 
-  for bootstrap_type in ['11', '31']: 
+  for bootstrap_type in ['11', '31', '31', '33']: 
     for impose_null in [True, False]:
       for weights_type in ['rademacher','mammen', 'webb','norm']:
         for pval_type in ['two-tailed', 'equal-tailed', '>', '<']:
@@ -187,7 +191,7 @@ def test_r_vs_py_stochastic():
       
   df = pd.DataFrame(np.transpose(np.array(boot_pvals)), columns=['p_val'],
                     index=pd.MultiIndex.from_product([
-                      ['11', '31'],
+                      ['11', '31', '31', '33'],
                       [True, False],
                       ['rademacher','mammen', 'webb','norm'],
                       ['two-tailed', 'equal-tailed', '>', '<']
@@ -196,7 +200,7 @@ def test_r_vs_py_stochastic():
   # r_df = pd.read_csv("data/test_df_fwc_res.csv")[['WCR11', "WCR31", "WCU11", "WCU31"]]
   r_df = pd.DataFrame(np.array(fwildclusterboot_boot_pvals), columns=['p_val'],
                       index=pd.MultiIndex.from_product([
-                      ['11', '31'],
+                      ['11', '31', '31', '33'],
                       [True, False],
                       ['rademacher','mammen', 'webb','norm'],
                       ['two-tailed', 'equal-tailed', '>', '<']
