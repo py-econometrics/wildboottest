@@ -262,37 +262,45 @@ class Wildboottest:
       
       elif self.crv_type == "crv3":
         
-        self.inv_tXX_tXgXg = []
+        self.inv_tXX_tXgXg = np.zeros((self.N_G_bootcluster, self.k, self.k))
         for ix, g in enumerate(self.bootclustid):
-          self.inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
-      
-        self.denom = np.zeros(self.B + 1)
-      
-        for b in range(0, self.B + 1):
+          self.inv_tXX_tXgXg[ix,:,:] = (np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
+            
+        @jit
+        def compute_denom3(B, G, k, v, scores_mat, tXXinv, bootclustid, inv_tXX_tXgXg, ssc):
+  
+          denom = np.zeros((B + 1, k))
+          for b in range(0, B + 1):
         
-          scores_g_boot = np.zeros((self.G, self.k))
-          v_ = self.v[:,b]
+            scores_g_boot = np.zeros((G, k))
+            v_ = v[:,b]
       
-          for ixg, g in enumerate(self.bootclustid):
+            for ixg, g in enumerate(bootclustid):
         
-            scores_g_boot[ixg,:] = self.scores_mat[:,ixg] * v_[ixg]
+              scores_g_boot[ixg,:] = scores_mat[:,ixg] * v_[ixg]
       
-          scores_boot = np.sum(scores_g_boot, axis = 0)
-          delta_b_star = self.tXXinv @ scores_boot
+            scores_boot = np.sum(scores_g_boot, axis = 0)
+            delta_b_star = tXXinv @ scores_boot
       
-          delta_diff = np.zeros((self.G, self.k))
+            delta_diff = np.zeros((G, k))
       
-          for ixg, g in enumerate(self.bootclustid):
+            for ixg, g in enumerate(bootclustid):
         
-            score_diff = scores_boot - scores_g_boot[ixg,:]
-            delta_diff[ixg,:] = (
+              score_diff = scores_boot - scores_g_boot[ixg,:]
+              delta_diff[ixg,:] = (
         
-              (self.inv_tXX_tXgXg[ixg] @ score_diff - delta_b_star)**2
+               (inv_tXX_tXgXg[ixg,:,:] @ score_diff - delta_b_star)**2
         
               )
           # se's
-          self.denom[b] = self.ssc * np.sum(delta_diff, axis = 0)[np.where(self.R == 1)]
+            denom[b,:] = ssc * np.sum(delta_diff, axis = 0)
       
+          return denom
+
+        self.denom = compute_denom3(
+          self.B, self.G, self.k, self.v, self.scores_mat, self.tXXinv, self.bootclustid, self.inv_tXX_tXgXg, self.ssc
+        )[:,self.R != 0]
+
       
   def get_tboot(self):
     
