@@ -17,17 +17,30 @@ class Wildboottest:
   Create an object of Wildboottest and get p-value by successively applying
   methods in the following way: 
     
-  wb = Wildboottest(X = X, Y = y, cluster = cluster, R = R, B = B)
+  import numpy as np
+  from wildboottest.wildboottest import Wildboottest
+  np.random.seed(12312312)
+  N = 1000
+  k = 3
+  G = 10
+  X = np.random.normal(0, 1, N * k).reshape((N,k))
+  beta = np.random.normal(0,1,k)
+  beta[0] = 0.005
+  u = np.random.normal(0,1,N)
+  Y = 1 + X @ beta + u
+  cluster = np.random.choice(list(range(0,G)), N)
+  R = np.array([1, 0, 0])
+  B = 999
+  
+  wb = Wildboottest(X = X, Y = Y, cluster = cluster, R = R, B = B)
   wb.get_scores(bootstrap_type = "11", impose_null = True)
+  wb.get_weights(weights_type= "rademacher")
   wb.get_numer()
   wb.get_denom()
   wb.get_tboot()
   wb.get_vcov()
   wb.get_tstat()
   wb.get_pvalue()  
-  
-  Later we can replace X, Y, cluster, R with an object estimated via 
-  statsmodels or linearmodels and a "param" values (as in fwildclusterboot::boottest())
   
   '''
   
