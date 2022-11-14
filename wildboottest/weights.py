@@ -49,7 +49,7 @@ def draw_weights(t : Union[str, Callable], full_enumeration: bool, N_G_bootclust
         boot_iter (int): the number of bootstrap iterations
 
     Returns:
-        np.ndarray: a matrix of dimension N_G_bootcluster x (boot_iter + 1)
+        Tuple[np.ndarray, int]: a matrix of dimension N_G_bootcluster x (boot_iter + 1) and the number of iterations
     """    
     
     #TODO: we can use the `case` feature in python, but that's only available in 3.10+ will do a 3.7 version for now
