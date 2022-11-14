@@ -2,9 +2,10 @@ import numpy as np
 import pandas as pd
 from numba import jit
 from itertools import product
-from wildboottest.weights import draw_weights
+from weights import draw_weights
 import warnings
-
+from typing import Union, Tuple, Callable
+from statsmodels.regression.linear_model import OLS
 class WildDrawFunctionException(Exception):
     pass
 
@@ -45,89 +46,117 @@ class Wildboottest:
   
   """
   
-  def __init__(self, X, Y, cluster, R, B, bootcluster = None, seed = None):
-      
-      "Initialize the wildboottest class"
-      #assert bootstrap_type in ['11', '13', '31', '33']
-      #assert impose_null in [True, False]
-      
-      if bootcluster is None: 
-        bootcluster = cluster
+  def __init__(self, X : Union[np.ndarray, pd.DataFrame, pd.Series], 
+               Y: Union[np.ndarray, pd.DataFrame, pd.Series], 
+               cluster : Union[np.ndarray, pd.DataFrame, pd.Series], 
+               R : Union[np.ndarray, pd.DataFrame], 
+               B: int, 
+               bootcluster: Union[np.ndarray, pd.DataFrame, pd.Series, None] = None, 
+               seed:  Union[int, None] = None) -> None:
+    """Initializes the Wild Cluster Bootstrap Class
 
-      for i in [X, Y, cluster, bootcluster]:
-        if isinstance(i, list):
-          raise TypeError(f"{i} cannot be a list")
+    Args:
+        X (Union[np.ndarray, pd.DataFrame, pd.Series]): Exogeneous variable array or dataframe
+        Y (Union[np.ndarray, pd.DataFrame, pd.Series]): Endogenous variable array or dataframe
+        cluster (Union[np.ndarray, pd.DataFrame, pd.Series]): Cluster array or dataframe
+        R (Union[np.ndarray, pd.DataFrame]): Constraint matrix for running bootstrap
+        B (int): bootstrap iterations
+        bootcluster (Union[np.ndarray, pd.DataFrame, pd.Series, None], optional): Sub-cluster array. Defaults to None.
+        seed (Union[int, None], optional): Random seed for random weight types. Defaults to None.
 
-      if isinstance(X, (pd.DataFrame, pd.Series)):
-        self.X = X.values
-      else:
-        self.X = X
-        
-      if isinstance(Y, (pd.DataFrame, pd.Series)):
-        self.Y = Y.values
-      else:
-        self.Y = Y
-        
-      if isinstance(cluster, pd.DataFrame):
-        self.clustid = cluster.unique()
-        self.cluster = cluster.values
-      if isinstance(bootcluster, pd.DataFrame):
-        self.bootclustid = bootcluster.unique()
-        self.bootcluster = bootcluster.values
-      else:
-        self.clustid = np.unique(cluster)
-        self.bootclustid = np.unique(bootcluster)
-        self.bootcluster = bootcluster
-        
-      if isinstance(seed, int):
-        np.random.seed(seed)
-
-      self.N_G_bootcluster = len(self.bootclustid)
-      self.G  = len(self.clustid)
-
-      self.N = X.shape[0]
-      self.k = X.shape[1]
-      self.B = B
-      self.R = R
+    Raises:
+        TypeError: Raise if input arrays are lists
+        TestMatrixNonConformabilityException: Raise if constraint matrix shape does not conform to X
+    """    
       
-      if self.X.shape[1] != self.R.shape[0]:
-        raise TestMatrixNonConformabilityException("The number of rows in the test matrix R, does not ")
-      
-      X_list = []
-      y_list = []
-      tXgXg_list = []
-      tXgyg_list = []
-      tXX = np.zeros((self.k, self.k))
-      tXy = np.zeros(self.k)
-      
-      #all_cluster = np.unique(bootcluster)
-      
-      for g in self.bootclustid:
-        
-        # split X and Y by (boot)cluster
-        X_g = self.X[np.where(self.bootcluster == g)]
-        Y_g = self.Y[np.where(self.bootcluster == g)]
-        tXgXg = np.transpose(X_g) @ X_g
-        tXgyg = np.transpose(X_g) @ Y_g
-        X_list.append(X_g)
-        y_list.append(Y_g)
-        tXgXg_list.append(tXgXg)
-        tXgyg_list.append(tXgyg)
-        tXX = tXX + tXgXg
-        tXy = tXy + tXgyg
-      
-      self.X_list = X_list
-      self.Y_list = y_list
-      self.tXgXg_list = tXgXg_list
-      self.tXgyg_list = tXgyg_list
-      self.tXX = tXX
-      self.tXy = tXy
-        
-      self.tXXinv = np.linalg.inv(tXX)
-      self.RtXXinv = np.matmul(R, self.tXXinv)
-      
-  def get_weights(self, weights_type):
+    "Initialize the wildboottest class"
+    #assert bootstrap_type in ['11', '13', '31', '33']
+    #assert impose_null in [True, False]
     
+    if bootcluster is None: 
+      bootcluster = cluster
+
+    for i in [X, Y, cluster, bootcluster]:
+      if isinstance(i, list):
+        raise TypeError(f"{i} cannot be a list")
+
+    if isinstance(X, (pd.DataFrame, pd.Series)):
+      self.X = X.values
+    else:
+      self.X = X
+      
+    if isinstance(Y, (pd.DataFrame, pd.Series)):
+      self.Y = Y.values
+    else:
+      self.Y = Y
+      
+    if isinstance(cluster, pd.DataFrame):
+      self.clustid = cluster.unique()
+      self.cluster = cluster.values
+    if isinstance(bootcluster, pd.DataFrame):
+      self.bootclustid = bootcluster.unique()
+      self.bootcluster = bootcluster.values
+    else:
+      self.clustid = np.unique(cluster)
+      self.bootclustid = np.unique(bootcluster)
+      self.bootcluster = bootcluster
+      
+    if isinstance(seed, int):
+      np.random.seed(seed)
+
+    self.N_G_bootcluster = len(self.bootclustid)
+    self.G  = len(self.clustid)
+
+    self.N = X.shape[0]
+    self.k = X.shape[1]
+    self.B = B
+    self.R = R
+    
+    if self.X.shape[1] != self.R.shape[0]:
+      raise TestMatrixNonConformabilityException("The number of rows in the test matrix R, does not ")
+    
+    X_list = []
+    y_list = []
+    tXgXg_list = []
+    tXgyg_list = []
+    tXX = np.zeros((self.k, self.k))
+    tXy = np.zeros(self.k)
+    
+    #all_cluster = np.unique(bootcluster)
+    
+    for g in self.bootclustid:
+      
+      # split X and Y by (boot)cluster
+      X_g = self.X[np.where(self.bootcluster == g)]
+      Y_g = self.Y[np.where(self.bootcluster == g)]
+      tXgXg = np.transpose(X_g) @ X_g
+      tXgyg = np.transpose(X_g) @ Y_g
+      X_list.append(X_g)
+      y_list.append(Y_g)
+      tXgXg_list.append(tXgXg)
+      tXgyg_list.append(tXgyg)
+      tXX = tXX + tXgXg
+      tXy = tXy + tXgyg
+    
+    self.X_list = X_list
+    self.Y_list = y_list
+    self.tXgXg_list = tXgXg_list
+    self.tXgyg_list = tXgyg_list
+    self.tXX = tXX
+    self.tXy = tXy
+      
+    self.tXXinv = np.linalg.inv(tXX)
+    self.RtXXinv = np.matmul(R, self.tXXinv)
+      
+  def get_weights(self, weights_type: Union[str, Callable]) -> Tuple[np.ndarray, int]:
+    """Function for getting weights for bootstrapping.
+
+    Args:
+        weights_type (Tuple[str, Callable]): The distribution to be used. Accepts Either 'rademacher', 'mammen', 'norm' or 'webb'. Optionally accepts a callable of one argument, `n`, the number of bootstraps iterations.
+
+    Returns:
+        Tuple[np.ndarray, int]: Returns the arrays of weights and the number of bootstrap iterations
+    """    
     self.weights_type = weights_type 
     
     if 2**self.N_G_bootcluster < self.B and weights_type=='rademacher':
@@ -143,98 +172,115 @@ class Wildboottest:
       boot_iter = self.B
     )  
     
-  def get_scores(self, bootstrap_type, impose_null, adj = True, cluster_adj = True):
+    return self.v, self.B
     
-      if bootstrap_type[1:2] == '1':
-        self.crv_type = "crv1"
-        self.ssc = 1
-        if(adj == True):
-          self.ssc = self.ssc * (self.N - 1) / (self.N - self.k)
-        if(cluster_adj == True):
-          self.ssc = self.ssc * self.G / (self.G - 1)
-      elif bootstrap_type[1:2] == '3':
-        self.crv_type = "crv3"
-        self.ssc = (self.G - 1) / self.G
+  def get_scores(self, bootstrap_type : str, 
+                 impose_null : bool, adj: bool = True, 
+                 cluster_adj: bool = True) -> np.ndarray:
+    """Run bootstrap and get scores for each variable
 
-      bootstrap_type_x = bootstrap_type[0:1] + 'x'
+    Args:
+        bootstrap_type (str): Determines which wild cluster bootstrap type should be run. Options are "fnw11","11", "13", "31" and "33" for the wild cluster bootstrap and "11" and "31" for the heteroskedastic bootstrap. For more information, see the details section. "fnw11" is the default for the cluster bootstrap, which runs a "11" type wild cluster bootstrap via the algorithm outlined in "fast and wild" (Roodman et al (2019)). "11" is the default for the heteroskedastic bootstrap.
+        impose_null (bool): Controls if the null hypothesis is imposed on the bootstrap dgp or not. Null imposed (WCR) by default. If False, the null is not imposed (WCU)
+        adj (bool, optional): Whether to adjust for small sample. Defaults to True.
+        cluster_adj (bool, optional): Whether to do a cluster-robust small sample correction. Defaults to True.
 
-      if impose_null == True:
-        self.bootstrap_type = "WCR" + bootstrap_type_x
-      else:
-        self.bootstrap_type = "WCU" + bootstrap_type_x
+    Returns:
+        np.ndarray: The output array of scores of shape kxG
+    """    
     
-      # not needed for all types, but compute anyways
-      self.beta_hat = self.tXXinv @ self.tXy
+    if bootstrap_type[1:2] == '1':
+      self.crv_type = "crv1"
+      self.ssc = 1
+      if(adj == True):
+        self.ssc = self.ssc * (self.N - 1) / (self.N - self.k)
+      if(cluster_adj == True):
+        self.ssc = self.ssc * self.G / (self.G - 1)
+    elif bootstrap_type[1:2] == '3':
+      self.crv_type = "crv3"
+      self.ssc = (self.G - 1) / self.G
 
-      # precompute required objects for computing scores & vcov's
-      if self.bootstrap_type in ["WCR3x"]: 
-        
-        X = self.X
-        X1 = X[:,self.R == 0]
-        X1_list = []
-        tX1gX1g_list = []
-        tX1gyg_list = []
-        tXgX1g_list = []
-        tX1X1 = np.zeros((self.k-1, self.k-1))
-        tX1y = np.zeros(self.k-1)
-          
-        for ix, g in enumerate(self.bootclustid):
-          #ix = g = 1
-          X1_list.append(X1[np.where(self.bootcluster == g)])
-          tX1gX1g_list.append(np.transpose(X1_list[ix]) @ X1_list[ix])
-          tX1gyg_list.append(np.transpose(X1_list[ix]) @ self.Y_list[ix])
-          tXgX1g_list.append(np.transpose(self.X_list[ix]) @  X1_list[ix])
-          tX1X1 = tX1X1 + tX1gX1g_list[ix]
-          tX1y = tX1y + tX1gyg_list[ix]
-          
-        beta_1g_tilde = []
-        
-        for ix, g in enumerate(self.bootclustid):
-          beta_1g_tilde.append(np.linalg.pinv(tX1X1 - tX1gX1g_list[ix]) @ (tX1y - tX1gyg_list[ix]))
+    bootstrap_type_x = bootstrap_type[0:1] + 'x'
 
-        beta = beta_1g_tilde
-        M = tXgX1g_list
-
-      elif self.bootstrap_type in ["WCU3x"]: 
-            
-        beta_g_hat = []
-        for ix, g in enumerate(self.bootclustid):
-          beta_g_hat.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]) @ (self.tXy - self.tXgyg_list[ix]))
+    if impose_null == True:
+      self.bootstrap_type = "WCR" + bootstrap_type_x
+    else:
+      self.bootstrap_type = "WCU" + bootstrap_type_x
   
-        beta = beta_g_hat
-        M = self.tXgXg_list
-          
-      elif self.bootstrap_type in ["WCR1x"]: 
-            
-        A = 1 / (np.transpose(self.R) @ self.tXXinv @ self.R)
-        beta_tilde = self.beta_hat - self.tXXinv @ self.R * A * (self.R @ self.beta_hat - 0)
-        beta = beta_tilde
-        M = self.tXgXg_list
-          
-      elif self.bootstrap_type in ["WCU1x"]: 
-            
-        beta = self.beta_hat 
-        M = self.tXgXg_list
+    # not needed for all types, but compute anyways
+    self.beta_hat = self.tXXinv @ self.tXy
 
-      # compute scores based on tXgyg, M, beta
-      scores_list = []
+    # precompute required objects for computing scores & vcov's
+    if self.bootstrap_type in ["WCR3x"]: 
       
-      if(self.bootstrap_type in ["WCR1x", "WCU1x"]):
+      X = self.X
+      X1 = X[:,self.R == 0]
+      X1_list = []
+      tX1gX1g_list = []
+      tX1gyg_list = []
+      tXgX1g_list = []
+      tX1X1 = np.zeros((self.k-1, self.k-1))
+      tX1y = np.zeros(self.k-1)
         
-        for ix, g in enumerate(self.bootclustid):
+      for ix, g in enumerate(self.bootclustid):
+        #ix = g = 1
+        X1_list.append(X1[np.where(self.bootcluster == g)])
+        tX1gX1g_list.append(np.transpose(X1_list[ix]) @ X1_list[ix])
+        tX1gyg_list.append(np.transpose(X1_list[ix]) @ self.Y_list[ix])
+        tXgX1g_list.append(np.transpose(self.X_list[ix]) @  X1_list[ix])
+        tX1X1 = tX1X1 + tX1gX1g_list[ix]
+        tX1y = tX1y + tX1gyg_list[ix]
         
-          scores_list.append(self.tXgyg_list[ix] - M[ix] @ beta)
+      beta_1g_tilde = []
       
-      elif(self.bootstrap_type in ["WCR3x", "WCU3x"]):
+      for ix, g in enumerate(self.bootclustid):
+        beta_1g_tilde.append(np.linalg.pinv(tX1X1 - tX1gX1g_list[ix]) @ (tX1y - tX1gyg_list[ix]))
+
+      beta = beta_1g_tilde
+      M = tXgX1g_list
+
+    elif self.bootstrap_type in ["WCU3x"]: 
+          
+      beta_g_hat = []
+      for ix, g in enumerate(self.bootclustid):
+        beta_g_hat.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]) @ (self.tXy - self.tXgyg_list[ix]))
+
+      beta = beta_g_hat
+      M = self.tXgXg_list
         
-        for ix, g in enumerate(self.bootclustid):
+    elif self.bootstrap_type in ["WCR1x"]: 
+          
+      A = 1 / (np.transpose(self.R) @ self.tXXinv @ self.R)
+      beta_tilde = self.beta_hat - self.tXXinv @ self.R * A * (self.R @ self.beta_hat - 0)
+      beta = beta_tilde
+      M = self.tXgXg_list
         
-          scores_list.append(self.tXgyg_list[ix] - M[ix] @ beta[ix])
-        
-      self.scores_mat = np.transpose(np.array(scores_list)) # k x G 
-      
-  def get_numer(self):
+    elif self.bootstrap_type in ["WCU1x"]: 
+          
+      beta = self.beta_hat 
+      M = self.tXgXg_list
+
+    # compute scores based on tXgyg, M, beta
+    scores_list = []
     
+    if(self.bootstrap_type in ["WCR1x", "WCU1x"]):
+      
+      for ix, g in enumerate(self.bootclustid):
+      
+        scores_list.append(self.tXgyg_list[ix] - M[ix] @ beta)
+    
+    elif(self.bootstrap_type in ["WCR3x", "WCU3x"]):
+      
+      for ix, g in enumerate(self.bootclustid):
+      
+        scores_list.append(self.tXgyg_list[ix] - M[ix] @ beta[ix])
+      
+    self.scores_mat = np.transpose(np.array(scores_list)) # k x G 
+    
+    return self.scores_mat
+  
+  
+  def get_numer(self):   
       # Calculate the bootstrap numerator
       self.Cg = self.R @ self.tXXinv @ self.scores_mat 
       self.numer = self.Cg @ self.v
@@ -306,7 +352,7 @@ class Wildboottest:
               )
           # se's
           self.denom[b] = self.ssc * np.sum(delta_diff, axis = 0)[np.where(self.R == 1)]
-      
+
       
   def get_tboot(self):
     
@@ -366,22 +412,29 @@ class Wildboottest:
       self.pvalue = np.mean(self.t_stat > self.t_boot)
 
 
-def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',impose_null = True, bootstrap_type = '11', seed = None):
+def wildboottest(model : OLS, 
+                 cluster : Union[np.ndarray, pd.Series, pd.DataFrame], 
+                 B:int, 
+                 param : Union[str, None] = None, 
+                 weights_type: str = 'rademacher',
+                 impose_null: bool = True, 
+                 bootstrap_type: str = '11', 
+                 seed: Union[str, None] = None):
   """
   Run a wild cluster bootstrap based on an object of class 'statsmodels.regression.linear_model.OLS'
   
   Args: 
     model(OLS): A statsmodels regression object
-    param(str): A string of length one, containing the test parameter of interest
-    cluster(np.array): A numpy array of dimension one, containing the clustering variable.
+    cluster(Union[np.ndarray, pd.Series, pd.DataFrame]): A numpy array of dimension one, containing the clustering variable.
     B(int): The number of bootstrap iterations to run
+    param(Union[str, None]): A string of length one, containing the test parameter of interest
     weights_type(str): The type of bootstrap weights. Either 'rademacher', 'mammen', 'webb' or 'normal'. 
                        'rademacher' by default.
     impose_null(logical): Should the null hypothesis be imposed on the bootstrap dgp, or not?
                           True by default. 
     bootstrap_type(str). A string of length one. Allows to choose the bootstrap type 
                          to be run. Either '11', '31', '13' or '33'. '11' by default.
-    seed(int). Option to provide a random seed. 
+    seed(Union[str, None]). Option to provide a random seed. 
     
   Returns: 
     A wild cluster bootstrapped p-value. 
@@ -445,7 +498,7 @@ def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',im
     boot.get_pvalue(pval_type = "two-tailed")
     
     pvalues.append(boot.pvalue)
-    tstats.append(boot.t_stat)
+    tstats.append(boot.t_stat[0])
   
     return pvalues, tstats
     
@@ -464,7 +517,11 @@ def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',im
     'p-value': pvalues
   }
   
-  return pd.DataFrame(res)
+  res_df = pd.DataFrame(res).set_index('param')
+  
+  print(res_df.to_markdown(floatfmt=".3f"))
+  
+  return res_df
   
 if __name__ == '__main__':
     import statsmodels.api as sm
@@ -487,10 +544,15 @@ if __name__ == '__main__':
 
     model = sm.OLS(Y_df, X_df)
     
-    print("--- WCB ---")
-    print(model.fit().summary())
+    print("--- wildboottest ---")
+    
+    wildboottest(model, cluster=cluster, B=9999, weights_type='rademacher',
+                 impose_null=True, bootstrap_type='11')
     
     print("--- NonRobust ---")
+    print(model.fit().summary())
+        
+    print("--- WCB ---")
     print(model.fit(cov_type='wildclusterbootstrap',
               cov_kwds = {'cluster' : cluster,
                           'B' : 9999,
