@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from numba import jit
 from itertools import product
-from wildboottest.weights import draw_weights
+from weights import draw_weights
 import warnings
 
 class WildDrawFunctionException(Exception):
@@ -446,7 +446,7 @@ def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',im
     boot.get_pvalue(pval_type = "two-tailed")
     
     pvalues.append(boot.pvalue)
-    tstats.append(boot.t_stat)
+    tstats.append(boot.t_stat[0])
   
     return pvalues, tstats
     
@@ -465,7 +465,11 @@ def wildboottest(model, cluster, B, param = None, weights_type = 'rademacher',im
     'p-value': pvalues
   }
   
-  return pd.DataFrame(res)
+  res_df = pd.DataFrame(res).set_index('param')
+  
+  print(res_df.to_markdown(floatfmt=".3f"))
+  
+  return res_df
   
 if __name__ == '__main__':
     import statsmodels.api as sm
@@ -488,10 +492,15 @@ if __name__ == '__main__':
 
     model = sm.OLS(Y_df, X_df)
     
-    print("--- WCB ---")
-    print(model.fit().summary())
+    print("--- wildboottest ---")
+    
+    wildboottest(model, cluster=cluster, B=9999, weights_type='rademacher',
+                 impose_null=True, bootstrap_type='11')
     
     print("--- NonRobust ---")
+    print(model.fit().summary())
+        
+    print("--- WCB ---")
     print(model.fit(cov_type='wildclusterbootstrap',
               cov_kwds = {'cluster' : cluster,
                           'B' : 9999,
