@@ -7,9 +7,10 @@ authors = [
   "Aleksandr Michuda <amichuda@gmail.com>"
 ]
 maintainers= [
-  "Alexander Fischer <alexander-fischer1801@t-online.de>",
-  "Aleksandr Michuda <amichuda@gmail.com>"
+  "Aleksandr Michuda <amichuda@gmail.com>",
+  "Alexander Fischer <alexander-fischer1801@t-online.de>"
 ]
+
 license = "MIT"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -49,4 +50,9 @@ build-backend = "poetry.core.masonry.api"
 enable = true
 vcs = "git"
 style = "semver"
+
+[tool.poetry-dynamic-versioning.substitution]
+folders = [
+    {path = "wildboottest"}
+]
 
