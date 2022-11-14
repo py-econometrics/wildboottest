@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
 from numba import jit
-from itertools import product
-from weights import draw_weights
+from wildboottest.weights import draw_weights
 import warnings
 from typing import Union, Tuple, Callable
 from statsmodels.regression.linear_model import OLS
+
 class WildDrawFunctionException(Exception):
     pass
 
@@ -419,48 +419,50 @@ def wildboottest(model : OLS,
                  weights_type: str = 'rademacher',
                  impose_null: bool = True, 
                  bootstrap_type: str = '11', 
-                 seed: Union[str, None] = None):
-  """
-  Run a wild cluster bootstrap based on an object of class 'statsmodels.regression.linear_model.OLS'
-  
-  Args: 
-    model(OLS): A statsmodels regression object
-    cluster(Union[np.ndarray, pd.Series, pd.DataFrame]): A numpy array of dimension one, containing the clustering variable.
-    B(int): The number of bootstrap iterations to run
-    param(Union[str, None]): A string of length one, containing the test parameter of interest
-    weights_type(str): The type of bootstrap weights. Either 'rademacher', 'mammen', 'webb' or 'normal'. 
-                       'rademacher' by default.
-    impose_null(logical): Should the null hypothesis be imposed on the bootstrap dgp, or not?
-                          True by default. 
-    bootstrap_type(str). A string of length one. Allows to choose the bootstrap type 
-                         to be run. Either '11', '31', '13' or '33'. '11' by default.
-    seed(Union[str, None]). Option to provide a random seed. 
-    
-  Returns: 
-    A wild cluster bootstrapped p-value. 
-    
+                 seed: Union[str, None] = None) -> float:
+  """Run a wild cluster bootstrap based on an object of class 'statsmodels.regression.linear_model.OLS'
+
+  Args:
+      model (OLS):  A statsmodels regression object
+      cluster (Union[np.ndarray, pd.Series, pd.DataFrame]): A numpy array of dimension one, containing the clustering variable.
+      B (int): The number of bootstrap iterations to run
+      param (Union[str, None], optional): A string of length one, containing the test parameter of interest. Defaults to None.
+      weights_type (str, optional): The type of bootstrap weights. Either 'rademacher', 'mammen', 'webb' or 'normal'. 
+                        'rademacher' by default. Defaults to 'rademacher'.
+      impose_null (bool, optional): Should the null hypothesis be imposed on the bootstrap dgp, or not?
+                           Defaults to True.
+      bootstrap_type (str, optional):A string of length one. Allows to choose the bootstrap type 
+                          to be run. Either '11', '31', '13' or '33'. '11' by default. Defaults to '11'.
+      seed (Union[str, None], optional): Option to provide a random seed. Defaults to None.
+
+  Raises:
+      Exception: Raises if `param` is not a string
+
+  Returns:
+      pd.DataFrame: A wild cluster bootstrapped p-value(s).
+      
   Example: 
   
-    >>> from wildboottest.wildboottest import wildboottest
-    >>> import statsmodels.api as sm
-    >>> import numpy as np
-    >>> import pandas as pd
-    
-    >>> np.random.seed(12312312)
-    >>> N = 1000
-    >>> k = 10
-    >>> G = 10
-    >>> X = np.random.normal(0, 1, N * k).reshape((N,k))
-    >>> X = pd.DataFrame(X)
-    >>> X.rename(columns = {0:"X1"}, inplace = True)
-    >>> beta = np.random.normal(0,1,k)
-    >>> beta[0] = 0.005
-    >>> u = np.random.normal(0,1,N)
-    >>> Y = 1 + X @ beta + u
-    >>> cluster = np.random.choice(list(range(0,G)), N)
-    >>> model = sm.OLS(Y, X)
-    >>> wildboottest(model, param = "X1", cluster = cluster, B = 9999)
-    >>> wildboottest(model, cluster = cluster, B = 9999)
+      >>> from wildboottest.wildboottest import wildboottest
+      >>> import statsmodels.api as sm
+      >>> import numpy as np
+      >>> import pandas as pd
+      
+      >>> np.random.seed(12312312)
+      >>> N = 1000
+      >>> k = 10
+      >>> G = 10
+      >>> X = np.random.normal(0, 1, N * k).reshape((N,k))
+      >>> X = pd.DataFrame(X)
+      >>> X.rename(columns = {0:"X1"}, inplace = True)
+      >>> beta = np.random.normal(0,1,k)
+      >>> beta[0] = 0.005
+      >>> u = np.random.normal(0,1,N)
+      >>> Y = 1 + X @ beta + u
+      >>> cluster = np.random.choice(list(range(0,G)), N)
+      >>> model = sm.OLS(Y, X)
+      >>> wildboottest(model, param = "X1", cluster = cluster, B = 9999)
+      >>> wildboottest(model, cluster = cluster, B = 9999)
   """
 
   # does model.exog already exclude missing values?
