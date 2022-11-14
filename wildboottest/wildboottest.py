@@ -13,37 +13,38 @@ class TestMatrixNonConformabilityException(Exception):
   pass
 
 class Wildboottest: 
-  
-  '''
+  """
   Create an object of Wildboottest and get p-value by successively applying
   methods in the following way: 
+  
+  Example:
     
-  import numpy as np
-  from wildboottest.wildboottest import Wildboottest
-  np.random.seed(12312312)
-  N = 1000
-  k = 3
-  G = 10
-  X = np.random.normal(0, 1, N * k).reshape((N,k))
-  beta = np.random.normal(0,1,k)
-  beta[0] = 0.005
-  u = np.random.normal(0,1,N)
-  Y = 1 + X @ beta + u
-  cluster = np.random.choice(list(range(0,G)), N)
-  R = np.array([1, 0, 0])
-  B = 999
+    >>> import numpy as np
+    >>> from wildboottest.wildboottest import Wildboottest
+    >>> np.random.seed(12312312)
+    >>> N = 1000
+    >>> k = 3
+    >>> G = 10
+    >>> X = np.random.normal(0, 1, N * k).reshape((N,k))
+    >>> beta = np.random.normal(0,1,k)
+    >>> beta[0] = 0.005
+    >>> u = np.random.normal(0,1,N)
+    >>> Y = 1 + X @ beta + u
+    >>> cluster = np.random.choice(list(range(0,G)), N)
+    >>> R = np.array([1, 0, 0])
+    >>> B = 999
+
+    >>> wb = Wildboottest(X = X, Y = Y, cluster = cluster, R = R, B = B)
+    >>> wb.get_scores(bootstrap_type = "11", impose_null = True)
+    >>> wb.get_weights(weights_type= "rademacher")
+    >>> wb.get_numer()
+    >>> wb.get_denom()
+    >>> wb.get_tboot()
+    >>> wb.get_vcov()
+    >>> wb.get_tstat()
+    >>> wb.get_pvalue()  
   
-  wb = Wildboottest(X = X, Y = Y, cluster = cluster, R = R, B = B)
-  wb.get_scores(bootstrap_type = "11", impose_null = True)
-  wb.get_weights(weights_type= "rademacher")
-  wb.get_numer()
-  wb.get_denom()
-  wb.get_tboot()
-  wb.get_vcov()
-  wb.get_tstat()
-  wb.get_pvalue()  
-  
-  '''
+  """
   
   def __init__(self, X : Union[np.ndarray, pd.DataFrame, pd.Series], 
                Y: Union[np.ndarray, pd.DataFrame, pd.Series], 
@@ -419,7 +420,7 @@ def wildboottest(model : OLS,
                  impose_null: bool = True, 
                  bootstrap_type: str = '11', 
                  seed: Union[str, None] = None):
-  '''
+  """
   Run a wild cluster bootstrap based on an object of class 'statsmodels.regression.linear_model.OLS'
   
   Args: 
@@ -439,28 +440,28 @@ def wildboottest(model : OLS,
     A wild cluster bootstrapped p-value. 
     
   Example: 
+  
+    >>> from wildboottest.wildboottest import wildboottest
+    >>> import statsmodels.api as sm
+    >>> import numpy as np
+    >>> import pandas as pd
     
-    from wildboottest.wildboottest import wildboottest
-    import statsmodels.api as sm
-    import numpy as np
-    import pandas as pd
-    
-    np.random.seed(12312312)
-    N = 1000
-    k = 10
-    G = 10
-    X = np.random.normal(0, 1, N * k).reshape((N,k))
-    X = pd.DataFrame(X)
-    X.rename(columns = {0:"X1"}, inplace = True)
-    beta = np.random.normal(0,1,k)
-    beta[0] = 0.005
-    u = np.random.normal(0,1,N)
-    Y = 1 + X @ beta + u
-    cluster = np.random.choice(list(range(0,G)), N)
-    model = sm.OLS(Y, X)
-    wildboottest(model, param = "X1", cluster = cluster, B = 9999)
-    wildboottest(model, cluster = cluster, B = 9999)
-  '''
+    >>> np.random.seed(12312312)
+    >>> N = 1000
+    >>> k = 10
+    >>> G = 10
+    >>> X = np.random.normal(0, 1, N * k).reshape((N,k))
+    >>> X = pd.DataFrame(X)
+    >>> X.rename(columns = {0:"X1"}, inplace = True)
+    >>> beta = np.random.normal(0,1,k)
+    >>> beta[0] = 0.005
+    >>> u = np.random.normal(0,1,N)
+    >>> Y = 1 + X @ beta + u
+    >>> cluster = np.random.choice(list(range(0,G)), N)
+    >>> model = sm.OLS(Y, X)
+    >>> wildboottest(model, param = "X1", cluster = cluster, B = 9999)
+    >>> wildboottest(model, cluster = cluster, B = 9999)
+  """
 
   # does model.exog already exclude missing values?
   X = model.exog

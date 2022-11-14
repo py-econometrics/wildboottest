@@ -1,0 +1,23 @@
+site_name: wildboottest
+nav:
+  - Home: index.md
+  - WildBoottest: base.md
+  - Weighting: weights.md
+  - Library APIs: library_apis.md
+extra:
+  version:
+    provider: mike
+theme:
+  name: material    
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - content.code.annotate
+plugins:
+  - git-revision-date-localized:
+      enable_creation_date: true
+  - search
+  - mkdocstrings
+repo_url: https://github.com/s3alfisc/wildboottest
+repo_name: s3alfisc/wildboottest
+
