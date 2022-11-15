@@ -6,7 +6,7 @@ bootstrap algorithms as developed in [Roodman et al
 [MacKinnon, Nielsen & Webb
 (2022)](https://www.econ.queensu.ca/sites/econ.queensu.ca/files/wpaper/qed_wp_1485.pdf).
 
-It has similar, but more limited functionality than Stata's [boottest](), R's [fwildcusterboot]() or Julia's [WildBootTests.jl](). It supports
+It has similar, but more limited functionality than Stata's [boottest](https://github.com/droodman/boottest), R's [fwildcusterboot](https://github.com/s3alfisc/fwildclusterboot) or Julia's [WildBootTests.jl](https://github.com/droodman/WildBootTests.jl). It supports
 
 -   The wild cluster bootstrap for OLS ([Cameron, Gelbach & Miller 2008](https://direct.mit.edu/rest/article-abstract/90/3/414/57731/Bootstrap-Based-Improvements-for-Inference-with),
     [Roodman et al (2019)](https://econpapers.repec.org/paper/qedwpaper/1406.htm)).
@@ -16,7 +16,7 @@ It has similar, but more limited functionality than Stata's [boottest](), R's [f
 -   CRV1 and CRV3 robust variance estimation, including the CRV3-Jackknife as 
     described in [MacKinnon, Nielsen & Webb (2022)](https://arxiv.org/pdf/2205.03288.pdf).
     
-At the moment, `wildboottest` only computes wild cluster bootstrapped p-values, and no confidence intervals. 
+At the moment, `wildboottest` only computes wild cluster bootstrapped *p-values*, and no confidence intervals. 
 
 Other features that are currently not supported: 
 
@@ -33,6 +33,13 @@ Direct support for [statsmodels](https://github.com/statsmodels/statsmodels) and
 If you'd like to cooperate, either send us an 
 [email](alexander-fischer1801@t-online.de) or comment in the issues section!
 
+## Installation 
+
+You can install `wildboottest` from [PyPi](https://pypi.org/project/wildboottest/) by running 
+
+```
+pip install wildboottest
+```
 
 ## Example 
 
