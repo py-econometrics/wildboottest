@@ -1,5 +1,8 @@
 ## wildboottest
 
+![PyPI](https://img.shields.io/pypi/v/wildboottest?label=pypi%20package)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/wildboottest)
+
 `wildboottest` implements multiple fast wild cluster
 bootstrap algorithms as developed in [Roodman et al
 (2019)](https://econpapers.repec.org/paper/qedwpaper/1406.htm) and
@@ -33,6 +36,14 @@ Direct support for [statsmodels](https://github.com/statsmodels/statsmodels) and
 If you'd like to cooperate, either send us an 
 [email](alexander-fischer1801@t-online.de) or comment in the issues section!
 
+
+## Installation 
+
+You can install the package from `PyPi` by running 
+
+```bash
+pip install wildboottest
+```
 
 ## Example 
 

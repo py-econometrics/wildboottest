@@ -360,16 +360,48 @@ pre code {
 
 <div id="wildboottest" class="section level2">
 <h2>wildboottest</h2>
-<p>In this repo, we aim to develop a Python version of the wild cluster
-bootstrap as implemented in Stata’s <a href="https://github.com/droodman/boottest">boottest</a>, R’s <a href="https://github.com/s3alfisc/fwildclusterboot">fwildclusterboot</a>
-or Julia’s <a href="https://github.com/droodman/WildBootTests.jl">WildBootTests.jl</a>
-as a post-estimation command for <a href="https://github.com/statsmodels/statsmodels">statsmodels</a> and <a href="https://github.com/bashtage/linearmodels">linearmodels</a>.</p>
+<p><img src="data:image/svg+xml;charset=utf-8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iMTI4IiBoZWlnaHQ9IjIwIiByb2xlPSJpbWciIGFyaWEtbGFiZWw9InB5cGkgcGFja2FnZTogdjAuMS40Ij48dGl0bGU+cHlwaSBwYWNrYWdlOiB2MC4xLjQ8L3RpdGxlPjxsaW5lYXJHcmFkaWVudCBpZD0icyIgeDI9IjAiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNiYmIiIHN0b3Atb3BhY2l0eT0iLjEiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3Atb3BhY2l0eT0iLjEiLz48L2xpbmVhckdyYWRpZW50PjxjbGlwUGF0aCBpZD0iciI+PHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIyMCIgcng9IjMiIGZpbGw9IiNmZmYiLz48L2NsaXBQYXRoPjxnIGNsaXAtcGF0aD0idXJsKCNyKSI+PHJlY3Qgd2lkdGg9IjgzIiBoZWlnaHQ9IjIwIiBmaWxsPSIjNTU1Ii8+PHJlY3QgeD0iODMiIHdpZHRoPSI0NSIgaGVpZ2h0PSIyMCIgZmlsbD0iI2ZlN2QzNyIvPjxyZWN0IHdpZHRoPSIxMjgiIGhlaWdodD0iMjAiIGZpbGw9InVybCgjcykiLz48L2c+PGcgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IlZlcmRhbmEsR2VuZXZhLERlamFWdSBTYW5zLHNhbnMtc2VyaWYiIHRleHQtcmVuZGVyaW5nPSJnZW9tZXRyaWNQcmVjaXNpb24iIGZvbnQtc2l6ZT0iMTEwIj48dGV4dCBhcmlhLWhpZGRlbj0idHJ1ZSIgeD0iNDI1IiB5PSIxNTAiIGZpbGw9IiMwMTAxMDEiIGZpbGwtb3BhY2l0eT0iLjMiIHRyYW5zZm9ybT0ic2NhbGUoLjEpIiB0ZXh0TGVuZ3RoPSI3MzAiPnB5cGkgcGFja2FnZTwvdGV4dD48dGV4dCB4PSI0MjUiIHk9IjE0MCIgdHJhbnNmb3JtPSJzY2FsZSguMSkiIGZpbGw9IiNmZmYiIHRleHRMZW5ndGg9IjczMCI+cHlwaSBwYWNrYWdlPC90ZXh0Pjx0ZXh0IGFyaWEtaGlkZGVuPSJ0cnVlIiB4PSIxMDQ1IiB5PSIxNTAiIGZpbGw9IiMwMTAxMDEiIGZpbGwtb3BhY2l0eT0iLjMiIHRyYW5zZm9ybT0ic2NhbGUoLjEpIiB0ZXh0TGVuZ3RoPSIzNTAiPnYwLjEuNDwvdGV4dD48dGV4dCB4PSIxMDQ1IiB5PSIxNDAiIHRyYW5zZm9ybT0ic2NhbGUoLjEpIiBmaWxsPSIjZmZmIiB0ZXh0TGVuZ3RoPSIzNTAiPnYwLjEuNDwvdGV4dD48L2c+PC9zdmc+" alt="PyPI" /> <img src="data:image/svg+xml;charset=utf-8;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iMTM0IiBoZWlnaHQ9IjIwIiByb2xlPSJpbWciIGFyaWEtbGFiZWw9ImRvd25sb2FkczogNzkvbW9udGgiPjx0aXRsZT5kb3dubG9hZHM6IDc5L21vbnRoPC90aXRsZT48bGluZWFyR3JhZGllbnQgaWQ9InMiIHgyPSIwIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjYmJiIiBzdG9wLW9wYWNpdHk9Ii4xIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLW9wYWNpdHk9Ii4xIi8+PC9saW5lYXJHcmFkaWVudD48Y2xpcFBhdGggaWQ9InIiPjxyZWN0IHdpZHRoPSIxMzQiIGhlaWdodD0iMjAiIHJ4PSIzIiBmaWxsPSIjZmZmIi8+PC9jbGlwUGF0aD48ZyBjbGlwLXBhdGg9InVybCgjcikiPjxyZWN0IHdpZHRoPSI2OSIgaGVpZ2h0PSIyMCIgZmlsbD0iIzU1NSIvPjxyZWN0IHg9IjY5IiB3aWR0aD0iNjUiIGhlaWdodD0iMjAiIGZpbGw9IiNhNGE2MWQiLz48cmVjdCB3aWR0aD0iMTM0IiBoZWlnaHQ9IjIwIiBmaWxsPSJ1cmwoI3MpIi8+PC9nPjxnIGZpbGw9IiNmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJWZXJkYW5hLEdlbmV2YSxEZWphVnUgU2FucyxzYW5zLXNlcmlmIiB0ZXh0LXJlbmRlcmluZz0iZ2VvbWV0cmljUHJlY2lzaW9uIiBmb250LXNpemU9IjExMCI+PHRleHQgYXJpYS1oaWRkZW49InRydWUiIHg9IjM1NSIgeT0iMTUwIiBmaWxsPSIjMDEwMTAxIiBmaWxsLW9wYWNpdHk9Ii4zIiB0cmFuc2Zvcm09InNjYWxlKC4xKSIgdGV4dExlbmd0aD0iNTkwIj5kb3dubG9hZHM8L3RleHQ+PHRleHQgeD0iMzU1IiB5PSIxNDAiIHRyYW5zZm9ybT0ic2NhbGUoLjEpIiBmaWxsPSIjZmZmIiB0ZXh0TGVuZ3RoPSI1OTAiPmRvd25sb2FkczwvdGV4dD48dGV4dCBhcmlhLWhpZGRlbj0idHJ1ZSIgeD0iMTAwNSIgeT0iMTUwIiBmaWxsPSIjMDEwMTAxIiBmaWxsLW9wYWNpdHk9Ii4zIiB0cmFuc2Zvcm09InNjYWxlKC4xKSIgdGV4dExlbmd0aD0iNTUwIj43OS9tb250aDwvdGV4dD48dGV4dCB4PSIxMDA1IiB5PSIxNDAiIHRyYW5zZm9ybT0ic2NhbGUoLjEpIiBmaWxsPSIjZmZmIiB0ZXh0TGVuZ3RoPSI1NTAiPjc5L21vbnRoPC90ZXh0PjwvZz48L3N2Zz4=" alt="PyPI - Downloads" /></p>
+<p><code>wildboottest</code> implements multiple fast wild cluster
+bootstrap algorithms as developed in <a href="https://econpapers.repec.org/paper/qedwpaper/1406.htm">Roodman et
+al (2019)</a> and <a href="https://www.econ.queensu.ca/sites/econ.queensu.ca/files/wpaper/qed_wp_1485.pdf">MacKinnon,
+Nielsen &amp; Webb (2022)</a>.</p>
+<p>It has similar, but more limited functionality than Stata’s <a href>boottest</a>, R’s <a href>fwildcusterboot</a> or Julia’s <a href>WildBootTests.jl</a>. It supports</p>
+<ul>
+<li>The wild cluster bootstrap for OLS (<a href="https://direct.mit.edu/rest/article-abstract/90/3/414/57731/Bootstrap-Based-Improvements-for-Inference-with">Cameron,
+Gelbach &amp; Miller 2008</a>, <a href="https://econpapers.repec.org/paper/qedwpaper/1406.htm">Roodman et
+al (2019)</a>).</li>
+<li>Multiple new versions of the wild cluster bootstrap as described in
+<a href="https://www.econ.queensu.ca/sites/econ.queensu.ca/files/wpaper/qed_wp_1485.pdf">MacKinnon,
+Nielsen &amp; Webb (2022)</a>, including the WCR13, WCR31, WCR33, WCU13,
+WCU31 and WCU33.</li>
+<li>CRV1 and CRV3 robust variance estimation, including the
+CRV3-Jackknife as described in <a href="https://arxiv.org/pdf/2205.03288.pdf">MacKinnon, Nielsen &amp;
+Webb (2022)</a>.</li>
+</ul>
+<p>At the moment, <code>wildboottest</code> only computes wild cluster
+bootstrapped p-values, and no confidence intervals.</p>
+<p>Other features that are currently not supported:</p>
+<ul>
+<li>The (non-clustered) wild bootstrap for OLS (<a href="https://projecteuclid.org/journals/annals-of-statistics/volume-14/issue-4/Jackknife-Bootstrap-and-Other-Resampling-Methods-in-Regression-Analysis/10.1214/aos/1176350142.full">Wu,
+1986</a>).</li>
+<li>The subcluster bootstrap (<a href="https://academic.oup.com/ectj/article-abstract/21/2/114/5078969?login=false">MacKinnon
+and Webb 2018</a>).</li>
+<li>Confidence intervals formed by inverting the test and iteratively
+searching for bounds.</li>
+<li>Multiway clustering.</li>
+</ul>
+<p>Direct support for <a href="https://github.com/statsmodels/statsmodels">statsmodels</a> and <a href="https://github.com/bashtage/linearmodels">linearmodels</a> is work
+in progress.</p>
 <p>If you’d like to cooperate, either send us an <a href="alexander-fischer1801@t-online.de">email</a> or comment in the
 issues section!</p>
 </div>
+<div id="installation" class="section level2">
+<h2>Installation</h2>
+<p>You can install the package from <code>PyPi</code> by running</p>
+<pre class="bash"><code>pip install wildboottest</code></pre>
+</div>
 <div id="example" class="section level2">
 <h2>Example</h2>
-<p>Note: everything is still very much work in progress.</p>
 <pre class="python"><code>from wildboottest.wildboottest import wildboottest
 import statsmodels.api as sm
 import numpy as np
@@ -379,7 +411,7 @@ import pandas as pd
 np.random.seed(12312312)
 N = 1000
 k = 10
-G = 10
+G = 25
 X = np.random.normal(0, 1, N * k).reshape((N,k))
 X = pd.DataFrame(X)
 X.rename(columns = {0:&quot;X1&quot;}, inplace = True)
@@ -392,22 +424,31 @@ cluster = np.random.choice(list(range(0,G)), N)
 # estimation
 model = sm.OLS(Y, X)
 
-wildboottest(model, param = &quot;X1&quot;, cluster = cluster, B = 9999)
+wildboottest(model, param = &quot;X1&quot;, cluster = cluster, B = 9999, bootstrap_type = &quot;11&quot;)
 #   param              statistic   p-value
-# 0    X1  [-0.9161101602560844]  0.414062
+# 0    X1  [-1.0530803154504016]  0.308831
+
+wildboottest(model, param = &quot;X1&quot;, cluster = cluster, B = 9999, bootstrap_type = &quot;31&quot;)
+#   param              statistic   p-value
+# 0    X1  [-1.0530803154504016]  0.307631
+
+wildboottest(model, param = &quot;X1&quot;, cluster = cluster, B = 9999, bootstrap_type = &quot;33&quot;)
+#   param              statistic   p-value
+# 0    X1  [-1.0394791020434824]  0.294286
+
 
 wildboottest(model, cluster = cluster, B = 9999)
 #   param              statistic   p-value
-# 0    X1  [-0.9161101602560844]  0.414062
-# 1     1   [-23.47104637779698]  0.000000
-# 2     2   [14.490683161123965]  0.000000
-# 3     3  [-12.622808111755516]  0.000000
-# 4     4   [-19.98559455990591]  0.000000
-# 5     5   [1.4925442694763955]  0.183594
-# 6     6    [7.231015380060432]  0.000000
-# 7     7   [-41.37320307285552]  0.000000
-# 8     8    [17.31090484734575]  0.000000
-# 9     9   [-37.31996125067985]  0.000000</code></pre>
+# 0    X1  [-1.0530803154504016]  0.315132
+# 1     1    [-18.5149486170657]  0.000000
+# 2     2    [7.831855813581191]  0.000000
+# 3     3   [-16.85188951397906]  0.000000
+# 4     4  [-12.721095348008182]  0.000000
+# 5     5    [1.200524160940055]  0.243624
+# 6     6    [6.870946666836135]  0.000000
+# 7     7   [-31.31653422266621]  0.000000
+# 8     8    [10.26443257212472]  0.000000
+# 9     9  [-20.650361366939535]  0.000000</code></pre>
 </div>
 
 
