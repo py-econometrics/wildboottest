@@ -44,14 +44,6 @@ You can install `wildboottest` from [PyPi](https://pypi.org/project/wildboottest
 pip install wildboottest
 ```
 
-## Installation 
-
-You can install the package from `PyPi` by running 
-
-```bash
-pip install wildboottest
-```
-
 ## Example 
 
 ```python
