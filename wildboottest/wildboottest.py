@@ -1,10 +1,10 @@
+from __future__ import annotations # add so that we can use type annotations as strings to get rid of circular imports
 import numpy as np
 import pandas as pd
 from numba import jit
 from wildboottest.weights import draw_weights
 import warnings
 from typing import Union, Tuple, Callable
-from statsmodels.regression.linear_model import OLS
 
 class WildDrawFunctionException(Exception):
     pass
@@ -412,7 +412,7 @@ class Wildboottest:
       self.pvalue = np.mean(self.t_stat > self.t_boot)
 
 
-def wildboottest(model : OLS, 
+def wildboottest(model : 'OLS', 
                  cluster : Union[np.ndarray, pd.Series, pd.DataFrame], 
                  B:int, 
                  param : Union[str, None] = None, 
