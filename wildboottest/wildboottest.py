@@ -148,7 +148,7 @@ class Wildboottest:
     self.tXXinv = np.linalg.inv(tXX)
     self.RtXXinv = np.matmul(R, self.tXXinv)
       
-  def get_weights(self, weights_type: Union[str, Callable]) -> Tuple[np.ndarray, int]:
+  def get_weights(self, weights_type: Union[str, Callable]) -> Tuple[np.ndarray, int, bool]:
     """Function for getting weights for bootstrapping.
 
     Args:
@@ -161,9 +161,10 @@ class Wildboottest:
     
     if 2**self.N_G_bootcluster < self.B and weights_type=='rademacher':
       self.full_enumeration = True
-      warnings.warn("2^G < the number of boot iterations, setting full_enumeration to True.")
+      full_enumeration_warn=True
     else: 
       self.full_enumeration = False
+      full_enumeration_warn=False
       
     self.v, self.B = draw_weights(
       t = self.weights_type, 
@@ -172,7 +173,7 @@ class Wildboottest:
       boot_iter = self.B
     )  
     
-    return self.v, self.B
+    return self.v, self.B, full_enumeration_warn
     
   def get_scores(self, bootstrap_type : str, 
                  impose_null : bool, adj: bool = True, 
@@ -192,9 +193,9 @@ class Wildboottest:
     if bootstrap_type[1:2] == '1':
       self.crv_type = "crv1"
       self.ssc = 1
-      if(adj == True):
+      if adj:
         self.ssc = self.ssc * (self.N - 1) / (self.N - self.k)
-      if(cluster_adj == True):
+      if cluster_adj:
         self.ssc = self.ssc * self.G / (self.G - 1)
     elif bootstrap_type[1:2] == '3':
       self.crv_type = "crv3"
@@ -419,7 +420,10 @@ def wildboottest(model : 'OLS',
                  weights_type: str = 'rademacher',
                  impose_null: bool = True, 
                  bootstrap_type: str = '11', 
-                 seed: Union[str, None] = None) -> float:
+                 seed: Union[str, None] = None,
+                 adj: bool = True,
+                 cluster_adj: bool = True,
+                 show=True) -> pd.DataFrame:
   """Run a wild cluster bootstrap based on an object of class 'statsmodels.regression.linear_model.OLS'
 
   Args:
@@ -490,8 +494,8 @@ def wildboottest(model : 'OLS',
         
     boot = Wildboottest(X = X, Y = Y, cluster = cluster, 
                         R = R, B = B, seed = seed)
-    boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null)
-    boot.get_weights(weights_type = weights_type)
+    boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null, adj=adj, cluster_adj=cluster_adj)
+    _, _, full_enumeration_warn = boot.get_weights(weights_type = weights_type)
     boot.get_numer()
     boot.get_denom()
     boot.get_tboot()
@@ -501,17 +505,20 @@ def wildboottest(model : 'OLS',
     
     pvalues.append(boot.pvalue)
     tstats.append(boot.t_stat[0])
-  
-    return pvalues, tstats
+      
+    return pvalues, tstats, full_enumeration_warn
     
   if param is None:
     for x in xnames:
-      pvalues, tstats = generate_stats(x)
+      pvalues, tstats, full_enumeration_warn = generate_stats(x)
     param = xnames
   elif isinstance(param, str):
-    pvalues, tstats = generate_stats(param)
+    pvalues, tstats, full_enumeration_warn = generate_stats(param)
   else:
     raise Exception("`param` not correctly specified")
+  
+  if full_enumeration_warn:
+    warnings.warn("2^G < the number of boot iterations, setting full_enumeration to True.")
   
   res = {
     'param': param,
@@ -521,7 +528,8 @@ def wildboottest(model : 'OLS',
   
   res_df = pd.DataFrame(res).set_index('param')
   
-  print(res_df.to_markdown(floatfmt=".3f"))
+  if show:
+    print(res_df.to_markdown(floatfmt=".3f"))
   
   return res_df
   
