@@ -46,6 +46,18 @@ You can install `wildboottest` from [PyPi](https://pypi.org/project/wildboottest
 pip install wildboottest
 ```
 
+## Citation 
+
+If you use `wildboottest` in your research, please consider citing it via 
+
+```
+@Unpublished{wildboottest2022,
+  Title  = {Fast Wild Cluster Bootstrap Inference in Python via wildboottest},
+  Author = {Alexander Fischer and Aleksandr Michuda},
+  Year   = {2022},
+  Url    = {https://github.com/s3alfisc/wildboottest}
+}
+```
 
 
 
