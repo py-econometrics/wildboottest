@@ -19,7 +19,6 @@ class Wildboottest:
   
   Example:
       
-      >>> # preliminaries: load libraries and create data
       >>> import numpy as np
       >>> from wildboottest.wildboottest import Wildboottest
       >>> np.random.seed(12312312)
@@ -35,7 +34,6 @@ class Wildboottest:
       >>> R = np.array([1, 0, 0])
       >>> B = 999
 
-      >>> # run the wild cluster bootstrap
       >>> wb = Wildboottest(X = X, Y = Y, cluster = cluster, R = R, B = B)
       >>> wb.get_scores(bootstrap_type = "11", impose_null = True)
       >>> wb.get_weights(weights_type= "rademacher")
