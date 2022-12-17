@@ -14,8 +14,6 @@ theme:
     - navigation.tabs
     - content.code.annotate
 plugins:
-  - git-revision-date-localized:
-      enable_creation_date: true
   - search
   - mkdocstrings
 repo_url: https://github.com/s3alfisc/wildboottest
