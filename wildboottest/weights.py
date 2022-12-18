@@ -82,6 +82,6 @@ def draw_weights(t : Union[str, Callable], full_enumeration: bool, N_G_bootclust
     
     # update boot_iter (B) - only relevant in enumeration case
     boot_iter = v0.shape[1] 
-    v = np.insert(v0, 0, 1,axis = 1)
+    #v = np.insert(v0, 0, 1,axis = 1)   
 
     return v, boot_iter

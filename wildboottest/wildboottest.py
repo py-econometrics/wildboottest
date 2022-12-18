@@ -305,9 +305,9 @@ class Wildboottest:
         @jit
         def compute_denom(Cg, H, bootclustid, B, G, v, ssc):
           
-          denom = np.zeros(B + 1)
+          denom = np.zeros(B)
       
-          for b in range(0, B+1):
+          for b in range(0, B):
             Zg = np.zeros(G)
             for ixg, g in enumerate(bootclustid):
               vH = 0
@@ -328,9 +328,9 @@ class Wildboottest:
         for ix, g in enumerate(self.bootclustid):
           self.inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
       
-        self.denom = np.zeros(self.B + 1)
+        self.denom = np.zeros(self.B)
       
-        for b in range(0, self.B + 1):
+        for b in range(0, self.B):
         
           scores_g_boot = np.zeros((self.G, self.k))
           v_ = self.v[:,b]
@@ -358,8 +358,7 @@ class Wildboottest:
       
   def get_tboot(self):
     
-      t_boot = self.numer / np.sqrt(self.denom)
-      self.t_boot = t_boot[1:(self.B+1)] # drop first element - might be useful for comp. of
+      self.t_boot = self.numer / np.sqrt(self.denom)
 
   def get_vcov(self):
     
