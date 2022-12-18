@@ -92,36 +92,60 @@ class WildboottestHC:
 
     self.weights_type = weights_type
       
-    k = np.where(self.R) == 1
+    k = np.where(self.R == 1)
     self.tXXinvX = self.tXXinv @ np.transpose(self.X)  
-  
-    if self.impose_null == True: 
-      beta_center = self.beta_hat
-    else: 
-      beta_center = np.zeros(self.k)
 
-    self.t_boot = np.zeros(self.B)
-    for b in range(0, self.B):
+    if self.impose_null == True: 
+      beta = self.beta_r.reshape((self.k, 1))
+    else: 
+      beta = self.beta_hat.reshape((self.k, 1))
+
+    yhat = (self.X @ beta).flatten()
+
+    R = self.R.reshape((self.k, 1))
+    self.RXXinvX_2 = np.power(np.transpose(R) @ self.tXXinv @ np.transpose(self.X), 2)
+
+
+    @jit
+    def bootstrap_iteration(B, weights_type, N, uhat_boot, tXXinv, X, RXXinvX_2,k):
+
+      t_boot = np.zeros(B)
+      for b in range(0, B):
       # draw N x 1 weights vector for each iteration - currently v always attaches column of ones
       # this column is not used anyways, so drop it
-      v = draw_weights(
-          t = self.weights_type, 
-          full_enumeration = False, 
-          N_G_bootcluster = self.N,
-          boot_iter = 1
+        v, boot_iter = draw_weights(
+            t = weights_type, 
+            full_enumeration = False, 
+            N_G_bootcluster = N,
+            boot_iter = 1
+            )
+        v = v.flatten()
+
+        uhat_boot = uhat_boot * v
+        yhat_boot = yhat + uhat_boot
+        beta_boot = tXXinv @ (np.transpose(X) @ yhat_boot)
+        resid_boot = yhat_boot - X @ beta_boot
+        cov_v = RXXinvX_2 @ np.power(resid_boot, 2)
+        t_boot[b] = (beta_boot[k] / np.sqrt(cov_v))
+
+      return t_boot 
+
+    self.t_boot = bootstrap_iteration(
+      self.B,
+       self.weights_type, 
+       self.N, 
+       self.uhat_boot, 
+       self.tXXinv, 
+       self.X, 
+       self.RXXinvX_2, 
+       k
       )
-    # get score boot
-      beta_b = self.tXXinvX @ (self.uhat_boot * v)
-      beta_bk = beta_b[k] - beta_center
-      cov_v = np.pow(beta_bk, 2)
-      self.t_boot[b] = beta_bk / np.sqrt(cov_v)
- 
  
   def get_tstat(self):
     
     k = np.where(self.R == 1)
-    cov = np.sqrt(self.tXXinvX[k,k], 2) @ self.uhat_stat
-    self.t_stat = self.beta / np.sqrt(cov)
+    cov = self.RXXinvX_2 @ np.power(self.uhat_stat, 2)
+    self.t_stat = (self.beta_hat[k] / np.sqrt(cov))[k]
         
   def get_pvalue(self, pval_type = "two-tailed"):
       
