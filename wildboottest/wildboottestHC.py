@@ -104,42 +104,26 @@ class WildboottestHC:
 
     R = self.R.reshape((self.k, 1))
     self.RXXinvX_2 = np.power(np.transpose(R) @ self.tXXinv @ np.transpose(self.X), 2)
+      
+    self.t_boot = np.zeros(self.B)
+    for b in range(0, self.B):
+    # draw N x 1 weights vector for each iteration - currently v always attaches column of ones
+    # this column is not used anyways, so drop it
+      v, boot_iter = draw_weights(
+          t = self.weights_type, 
+          full_enumeration = False, 
+          N_G_bootcluster = self.N,
+          boot_iter = 1
+          )
+      v = v.flatten()
 
+      uhat_boot = self.uhat_boot * v
+      yhat_boot = yhat + uhat_boot
+      beta_boot = self.tXXinv @ (np.transpose(self.X) @ yhat_boot)
+      resid_boot = yhat_boot - self.X @ beta_boot
+      cov_v = self.RXXinvX_2 @ np.power(resid_boot, 2)
+      self.t_boot[b] = (beta_boot[k] / np.sqrt(cov_v))
 
-    @jit
-    def bootstrap_iteration(B, weights_type, N, uhat_boot, tXXinv, X, RXXinvX_2,k):
-
-      t_boot = np.zeros(B)
-      for b in range(0, B):
-      # draw N x 1 weights vector for each iteration - currently v always attaches column of ones
-      # this column is not used anyways, so drop it
-        v, boot_iter = draw_weights(
-            t = weights_type, 
-            full_enumeration = False, 
-            N_G_bootcluster = N,
-            boot_iter = 1
-            )
-        v = v.flatten()
-
-        uhat_boot = uhat_boot * v
-        yhat_boot = yhat + uhat_boot
-        beta_boot = tXXinv @ (np.transpose(X) @ yhat_boot)
-        resid_boot = yhat_boot - X @ beta_boot
-        cov_v = RXXinvX_2 @ np.power(resid_boot, 2)
-        t_boot[b] = (beta_boot[k] / np.sqrt(cov_v))
-
-      return t_boot 
-
-    self.t_boot = bootstrap_iteration(
-      self.B,
-       self.weights_type, 
-       self.N, 
-       self.uhat_boot, 
-       self.tXXinv, 
-       self.X, 
-       self.RXXinvX_2, 
-       k
-      )
  
   def get_tstat(self):
     
