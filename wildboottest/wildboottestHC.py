@@ -14,6 +14,35 @@ class TestMatrixNonConformabilityException(Exception):
 
 class WildboottestHC: 
 
+    """
+  Create an object of WildboottestHC and get p-value by successively applying
+  methods in the following way: 
+  
+  Example:
+      
+      >>> import numpy as np
+      >>> from wildboottest.wildboottest import WildboottestHC
+      >>> np.random.seed(12312312)
+      >>> N = 1000
+      >>> k = 3
+      >>> G = 10
+      >>> X = np.random.normal(0, 1, N * k).reshape((N,k))
+      >>> beta = np.random.normal(0,1,k)
+      >>> beta[0] = 0.005
+      >>> u = np.random.normal(0,1,N)
+      >>> Y = 1 + X @ beta + u
+      >>> R = np.array([1, 0, 0])
+      >>> B = 999
+
+      >>> # run the wild cluster bootstrap
+      >>> wb = WildboottestHC(X = X, Y = Y, R = R, B = B)
+      >>> wb.get_adjustments(bootstrap_type = '11')
+      >>> wb.get_uhat(impose_null = True)
+      >>> wb.get_tboot(weights_type = "webb")
+      >>> wb.get_tstat()
+      >>> wb.get_pvalue()  
+  """
+
   def __init__(self, X : Union[np.ndarray, pd.DataFrame, pd.Series], 
           Y: Union[np.ndarray, pd.DataFrame, pd.Series], 
           R : Union[np.ndarray, pd.DataFrame], 
