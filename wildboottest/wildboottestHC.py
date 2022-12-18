@@ -59,35 +59,18 @@ class WildboottestHC:
     if self.X.shape[1] != self.R.shape[0]:
       raise TestMatrixNonConformabilityException("The number of rows in the test matrix R, does not ")
 
-
-  def _adjust_scores(X, tXXinv, variant):
-    
-    N = X.shape[0]
-    if variant == "1":
-      # HC1
-      resid_multiplier = np.ones(N)
-    else: 
-      hatmat = X @ tXXinv @ np.transpose(X)
-      diag_hatmat = np.diag(hatmat)
-      if variant == "2": 
-        # HC2
-        resid_multiplier = 1 / np.sqrt(1-diag_hatmat)
-      elif variant == "3":
-        # HC2
-        resid_multiplier = 1 / (1-diag_hatmat)
-
-    return resid_multiplier
-
   def get_adjustments(self, bootstrap_type):
 
-        # allow for arbitrary different adjustments for bootstrap and standard t-stat
+    # allow for arbitrary different adjustments for bootstrap and standard t-stat
+    self.tXXinv = np.linalg.inv(np.transpose(self.X) @ self.X)
     self.resid_multiplier_boot = _adjust_scores(self.X, self.tXXinv, bootstrap_type[0])
-    self.resid_multiplier_boot = _adjust_scores(self.X, self.tXXinv, bootstrap_type[1])
+    if bootstrap_type[0] == bootstrap_type[1]:
+      self.resid_multiplier_stat = self.resid_multiplier_boot
+    else: 
+      self.resid_multiplier_stat = _adjust_scores(self.X, self.tXXinv, bootstrap_type[1])
 
   def get_uhat(self, impose_null : bool): 
       
-      
-    self.tXXinv = np.linalg.inv(np.transpose(self.X) @ self.X)
     self.tXy = np.transpose(self.X) @ self.Y
     self.beta_hat = self.tXXinv @ self.tXy 
     self.uhat = self.Y - self.X @ self.beta_hat
@@ -99,13 +82,15 @@ class WildboottestHC:
       self.impose_null = True
       r = 0
       self.beta_r = self.beta_hat - self.tXXinv @ self.R * ( 1 / (np.transpose(self.R) @ self.tXXinv @ self.R)) * (np.transpose(self.R) @ self.beta_hat - r)#self.uhat_r = self.Y - self.beta_r 
-      self.uhat_r = self.Y - X @ self.beta_r 
+      self.uhat_r = self.Y - self.X @ self.beta_r 
       self.uhat_boot = self.uhat_r * self.resid_multiplier_boot
     else: 
       self.impose_null = False    
       self.uhat_boot = self.uhat * self.resid_multiplier_boot
 
   def get_tboot(self, weights_type: Union[str, Callable]):
+
+    self.weights_type = weights_type
       
     k = np.where(self.R) == 1
     self.tXXinvX = self.tXXinv @ np.transpose(self.X)  
@@ -116,8 +101,9 @@ class WildboottestHC:
       beta_center = np.zeros(self.k)
 
     self.t_boot = np.zeros(self.B)
-    for b in range(1, B+1):
-      # draw N x 1 weights vector for each iteration
+    for b in range(0, self.B):
+      # draw N x 1 weights vector for each iteration - currently v always attaches column of ones
+      # this column is not used anyways, so drop it
       v = draw_weights(
           t = self.weights_type, 
           full_enumeration = False, 
@@ -150,3 +136,22 @@ class WildboottestHC:
       else: 
         self.pvalue = np.mean(self.t_stat > self.t_boot)
              
+
+
+def _adjust_scores(X, tXXinv, variant):
+    
+  N = X.shape[0]
+  if variant == "1":
+    # HC1
+    resid_multiplier = np.ones(N)
+  else: 
+    hatmat = X @ tXXinv @ np.transpose(X)
+    diag_hatmat = np.diag(hatmat)
+    if variant == "2": 
+      # HC2
+      resid_multiplier = 1 / np.sqrt(1-diag_hatmat)
+    elif variant == "3":
+      # HC2
+      resid_multiplier = 1 / (1-diag_hatmat)
+
+  return resid_multiplier
