@@ -59,81 +59,94 @@ class WildboottestHC:
     if self.X.shape[1] != self.R.shape[0]:
       raise TestMatrixNonConformabilityException("The number of rows in the test matrix R, does not ")
 
+
+  def _adjust_scores(X, tXXinv, variant):
+    
+    N = X.shape[0]
+    if variant == "1":
+      # HC1
+      resid_multiplier = np.ones(N)
+    else: 
+      hatmat = X @ tXXinv @ np.transpose(X)
+      diag_hatmat = np.diag(hatmat)
+      if variant == "2": 
+        # HC2
+        resid_multiplier = 1 / np.sqrt(1-diag_hatmat)
+      elif variant == "3":
+        # HC2
+        resid_multiplier = 1 / (1-diag_hatmat)
+
+    return resid_multiplier
+
+  def get_adjustments(self, bootstrap_type):
+
+        # allow for arbitrary different adjustments for bootstrap and standard t-stat
+    self.resid_multiplier_boot = _adjust_scores(self.X, self.tXXinv, bootstrap_type[0])
+    self.resid_multiplier_boot = _adjust_scores(self.X, self.tXXinv, bootstrap_type[1])
+
   def get_uhat(self, impose_null : bool): 
       
       
     self.tXXinv = np.linalg.inv(np.transpose(self.X) @ self.X)
     self.tXy = np.transpose(self.X) @ self.Y
     self.beta_hat = self.tXXinv @ self.tXy 
-    self.uhat = self.Y - X @ self.beta_hat
-    self.score = np.transpose(self.X) @ self.uhat
+    self.uhat = self.Y - self.X @ self.beta_hat
     
+    
+    self.uhat_stat = self.uhat * self.resid_multiplier_stat
+
     if impose_null: 
       self.impose_null = True
       r = 0
       self.beta_r = self.beta_hat - self.tXXinv @ self.R * ( 1 / (np.transpose(self.R) @ self.tXXinv @ self.R)) * (np.transpose(self.R) @ self.beta_hat - r)#self.uhat_r = self.Y - self.beta_r 
       self.uhat_r = self.Y - X @ self.beta_r 
-      self.score_r = np.transpose(self.X) @ self.uhat_r
+      self.uhat_boot = self.uhat_r * self.resid_multiplier_boot
     else: 
       self.impose_null = False    
+      self.uhat_boot = self.uhat * self.resid_multiplier_boot
+
+  def get_tboot(self, weights_type: Union[str, Callable]):
+      
+    k = np.where(self.R) == 1
+    self.tXXinvX = self.tXXinv @ np.transpose(self.X)  
+  
+    if self.impose_null == True: 
+      beta_center = self.beta_hat
+    else: 
+      beta_center = np.zeros(self.k)
+
+    self.t_boot = np.zeros(self.B)
+    for b in range(1, B+1):
+      # draw N x 1 weights vector for each iteration
+      v = draw_weights(
+          t = self.weights_type, 
+          full_enumeration = False, 
+          N_G_bootcluster = self.N,
+          boot_iter = 1
+      )
+    # get score boot
+      beta_b = self.tXXinvX @ (self.uhat_boot * v)
+      beta_bk = beta_b[k] - beta_center
+      cov_v = np.pow(beta_bk, 2)
+      self.t_boot[b] = beta_bk / np.sqrt(cov_v)
+ 
+ 
+  def get_tstat(self):
+    
+    k = np.where(self.R == 1)
+    cov = np.sqrt(self.tXXinvX[k,k], 2) @ self.uhat_stat
+    self.t_stat = self.beta / np.sqrt(cov)
         
-  # def adjust_scores(self, bootstrap_type :str):
-  #   
-  #     if bootstrap_type == "11":
-  #        self.resid_multiplier = np.ones(self.N)
-  #     else: 
-  #         hatmat = self.X @ self.tXXinv @ np.transpose(self.X)
-  #         diag_hatmat = np.diag(hatmat)
-  #         if bootstrap_type == "21": 
-  #             self.resid_multiplier = 1 / np.sqrt(1-diag_hatmat)
-  #         elif bootstrap_type == "31":
-  #             self.resid_multiplier = 1 / (1-diag_hatmat)
-  # 
-  #     # update scores
-  #     self.score = self.resid_multiplier * self.score
-  #     if self.impose_null = True: 
-  #       self.score_r = self.resid_multiplier * self.score_r 
-  #     
-  # def get_tboot(self, weights_type: Union[str, Callable]):
-  #     
-  #     if self.impose_null == True: 
-  #       beta = self.tXXinv @ self.score_r
-  #     else: 
-  #       beta = self.tXXinv @ self.score
-  #       
-  #     beta = beta[np.where(self.R) == 1]
-  # 
-  #     self.t_boot = np.zeros(self.B)
-  #     for b in range(1, B+1):
-  #       # draw N x 1 weights vector for each iteration
-  #       v = draw_weights(
-  #             t = self.weights_type, 
-  #             full_enumeration = False, 
-  #             N_G_bootcluster = self.N,
-  #             boot_iter = 1
-  #           )
-  #       # get score boot
-  #       beta_b = beta * v
-  #       cov_v = np.pow(beta_b, 2)
-  #       self.t_boot = beta_b / np.sqrt(cov_v)
-  # 
-  # def get_tstat(self):
-  #   
-  #   k = np.where(self.R == 1)
-  #   score_k = self.score[k]
-  #   cov = np.sqrt(self.tXXinv[k,k], 2) @ score_k
-  #   self.t_stat = self.beta / np.sqrt(cov)
-  #       
-  # def get_pvalue(self, pval_type = "two-tailed"):
-  #     
-  #     if pval_type == "two-tailed":
-  #       self.pvalue = np.mean(np.abs(self.t_stat) < abs(self.t_boot))
-  #     elif pval_type == "equal-tailed":
-  #       pl = np.mean(self.t_stat < self.t_boot)
-  #       ph = np.mean(self.t_stat > self.t_boot)
-  #       self.pvalue = 2 * min(pl, ph)
-  #     elif pval_type == ">":
-  #       self.pvalue = np.mean(self.t_stat < self.t_boot)
-  #     else: 
-  #       self.pvalue = np.mean(self.t_stat > self.t_boot)
-  #            
+  def get_pvalue(self, pval_type = "two-tailed"):
+      
+      if pval_type == "two-tailed":
+        self.pvalue = np.mean(np.abs(self.t_stat) < abs(self.t_boot))
+      elif pval_type == "equal-tailed":
+        pl = np.mean(self.t_stat < self.t_boot)
+        ph = np.mean(self.t_stat > self.t_boot)
+        self.pvalue = 2 * min(pl, ph)
+      elif pval_type == ">":
+        self.pvalue = np.mean(self.t_stat < self.t_boot)
+      else: 
+        self.pvalue = np.mean(self.t_stat > self.t_boot)
+             
