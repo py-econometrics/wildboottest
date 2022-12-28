@@ -112,10 +112,10 @@ class WildboottestHC:
           r = 0
           self.beta_r = self.beta_hat - self.tXXinv @ self.R * ( 1 / (np.transpose(self.R) @ self.tXXinv @ self.R)) * (np.transpose(self.R) @ self.beta_hat - r)#self.uhat_r = self.Y - self.beta_r 
           self.uhat_r = self.Y - self.X @ self.beta_r 
-          self.uhat_boot = self.uhat_r * self.resid_multiplier_boot
+          self.uhat2 = self.uhat_r * self.resid_multiplier_boot
         else: 
           self.impose_null = False    
-          self.uhat_boot = self.uhat * self.resid_multiplier_boot
+          self.uhat2 = self.uhat * self.resid_multiplier_boot
 
     def get_tboot(self, weights_type: Union[str, Callable]):
 
@@ -134,31 +134,50 @@ class WildboottestHC:
         R = self.R.reshape((self.k, 1))
         self.RXXinvX_2 = np.power(np.transpose(R) @ self.tXXinv @ np.transpose(self.X), 2)
           
-        self.t_boot = np.zeros(self.B)
-        for b in range(0, self.B):
-            # draw N x 1 weights vector for each iteration - currently v always attaches column of ones
-            # this column is not used anyways, so drop it
-            v, boot_iter = draw_weights(
-                t = self.weights_type, 
-                full_enumeration = False, 
-                N_G_bootcluster = self.N,
-                boot_iter = 1
-                )
-            v = v.flatten()
+        @jit  
+        def _run_hc_bootstrap(B, weights_type, N, X, yhat, uhat2, tXXinv, RXXinvX_2, Rt):
 
-            uhat_boot = self.uhat_boot * v
-            yhat_boot = yhat + uhat_boot
-            beta_boot = self.tXXinv @ (np.transpose(self.X) @ yhat_boot)
-            resid_boot = yhat_boot - self.X @ beta_boot
-            cov_v = self.RXXinvX_2 @ np.power(resid_boot, 2)
-            self.t_boot[b] = (beta_boot[k] / np.sqrt(cov_v))
+            #rng = np.random.default_rng()
 
+            t_boot = np.zeros(B)
+            for b in range(0, B):
+            # create weights vector. mammen weights not supported via numba
+                if weights_type == 'rademacher':
+                    v = np.random.choice(np.array([-1,1]),size=N, replace=True)
+                #elif weights_type == "webb":
+                #    v = np.random.choice(
+                #        a = np.concatenate(np.array([-np.sqrt(np.array([3,2,1]) / 2), np.sqrt(np.array([1,2,3]) / 2)])),
+                #        replace=True,
+                #        size=N
+                #    )
+                # else:
+                #    v = np.random.normal(size=N) 
+
+                uhat_boot = uhat2 * v
+                yhat_boot = yhat + uhat_boot
+                beta_boot = tXXinv @ (np.transpose(X) @ yhat_boot)
+                resid_boot = yhat_boot - X @ beta_boot
+                cov_v = RXXinvX_2 @ np.power(resid_boot, 2)
+                t_boot[b] = (Rt @ beta_boot / np.sqrt(cov_v)).item()
+
+            return t_boot
+
+        self.t_boot = _run_hc_bootstrap(
+            B = self.B, 
+            weights_type = self.weights_type, 
+            N = self.N, 
+            X = self.X,
+            yhat = yhat, 
+            uhat2 = self.uhat2,
+            tXXinv = self.tXXinv, 
+            RXXinvX_2 = self.RXXinvX_2, 
+            Rt = np.transpose(self.R)
+          )
  
     def get_tstat(self):
     
-        k = np.where(self.R == 1)
         cov = self.RXXinvX_2 @ np.power(self.uhat_stat, 2)
-        self.t_stat = (self.beta_hat[k] / np.sqrt(cov))[k]
+        self.t_stat = (np.transpose(self.R) @ self.beta_hat / np.sqrt(cov))
           
     def get_pvalue(self, pval_type = "two-tailed"):
       
