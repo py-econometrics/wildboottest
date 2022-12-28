@@ -695,13 +695,6 @@ def wildboottest(model : 'OLS',
       # cluster = ...
 
       if cluster is None: 
-        is_wcb = False
-      else: 
-        is_wcb = True
-
-      if is_wcb == False: 
-
-          print('Estimate Heteroskedastic bootstrap: ')
       
           boot = WildboottestHC(X = X, Y = Y, R = R, B = B, seed = seed)
           boot.get_adjustments(bootstrap_type = bootstrap_type)

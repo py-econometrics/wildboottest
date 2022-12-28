@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from wildboottest.wildboottest import wildboottest, Wildboottest
+from wildboottest.wildboottest import wildboottest, WildboottestCL
 from wildboottest.weights import wild_draw_fun_dict
 import statsmodels.api as sm
 import numpy as np
@@ -21,7 +21,7 @@ ts = list(wild_draw_fun_dict.keys())
 
 def data(G):
   np.random.seed(12312)
-  N = 10000
+  N = 1000
   k = 3
   # small sample size -> full enumeration
   X = np.random.normal(0, 1, N * k).reshape((N,k))
@@ -41,6 +41,33 @@ def data(G):
   return df, B
 
 
+def hc_vs_cluster_bootstrap(): 
+
+  '''
+  compare results from HC vs cluster bootstrap
+  '''
+
+  def reldiff(x, y): 
+      1 - x / y 
+
+  df, B = data(5)
+  N = df.shape[0]
+  cluster = pd.Series(range(0, N))
+  X = df[['intercept', 'X1', 'X2']]
+  Y = df['Y']
+  R = np.array([0,1,0])
+
+  fit = sm.OLS(Y, X)
+
+  types = ['11', '13', '31', '33']
+
+  for type in types: 
+
+      hc = wildboottest(fit, param = "X1", bootstrap_type=type)
+      cl = wildboottest(fit, param = "X1", cluster = cluster, bootstrap_type=type)
+
+      assert reldiff(hc.xs('X1')[0], cl.xs('X1')[0])
+      assert reldiff(hc.xs('X1')[1], cl.xs('X1')[1])
 
 
 def test_r_vs_py_deterministic():
@@ -79,7 +106,7 @@ def test_r_vs_py_deterministic():
   for bootstrap_type in ['11', '31', '31', '33']: 
     for impose_null in [True, False]:
       # python implementation
-      boot = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
+      boot = WildboottestCL(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
       boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null)
       boot.get_weights(weights_type = "rademacher")
       boot.get_numer()
@@ -162,7 +189,7 @@ def test_r_vs_py_stochastic():
         for pval_type in ['two-tailed', 'equal-tailed', '>', '<']:
           
           # python implementation
-          boot = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
+          boot = WildboottestCL(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
           boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null)
           boot.get_weights(weights_type = weights_type)
           boot.get_numer()
@@ -230,7 +257,7 @@ def test_data_is_list():
   R = np.array([0,1,0])
 
   with pytest.raises(TypeError):
-    Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
+    WildboottestCL(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
 
 def test_seeds():
   
@@ -244,7 +271,7 @@ def test_seeds():
 
   for s in range(1,10000):
     for w in ts:
-      boot = Wildboottest(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = s)
+      boot = WildboottestCL(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = s)
       boot.get_scores(bootstrap_type = "11", impose_null = True)
       boot.get_weights(weights_type = w)
       boot.get_numer()
