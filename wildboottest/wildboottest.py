@@ -1,7 +1,7 @@
 from __future__ import annotations # add so that we can use type annotations as strings to get rid of circular imports
 import numpy as np
 import pandas as pd
-from numba import jit
+from numba import jit, njit, prange
 from wildboottest.weights import draw_weights
 import warnings
 from typing import Union, Tuple, Callable
@@ -12,16 +12,248 @@ class WildDrawFunctionException(Exception):
 class TestMatrixNonConformabilityException(Exception):
   pass
 
-class Wildboottest: 
+class TestBootstrapTypeException(Exception):
+  pass
+
+class TestHCImposeNullException(Exception):
+  pass
+
+class TestHCWeightsException(Exception):
+  pass
+
+class WildboottestHC: 
+
+    """
+    Create an object of WildboottestHC and get p-value by successively applying
+    methods in the following way: 
+  
+    Example:
+      
+      >>> import numpy as np
+      >>> from wildboottest.wildboottest import WildboottestHC
+      >>> np.random.seed(12312312)
+      >>> N = 1000
+      >>> k = 3
+      >>> G = 10
+      >>> X = np.random.normal(0, 1, N * k).reshape((N,k))
+      >>> beta = np.random.normal(0,1,k)
+      >>> beta[0] = 0.005
+      >>> u = np.random.normal(0,1,N)
+      >>> Y = 1 + X @ beta + u
+      >>> R = np.array([1, 0, 0])
+      >>> B = 999
+
+      >>> # run the wild bootstrap
+      >>> wb = WildboottestHC(X = X, Y = Y, R = R, B = B)
+      >>> wb.get_adjustments(bootstrap_type = '11')
+      >>> wb.get_uhat(impose_null = True)
+      >>> wb.get_tboot(weights_type = "webb")
+      >>> wb.get_tstat()
+      >>> wb.get_pvalue()  
+    """
+
+    def __init__(self, X : Union[np.ndarray, pd.DataFrame, pd.Series], 
+          Y: Union[np.ndarray, pd.DataFrame, pd.Series], 
+          R : Union[np.ndarray, pd.DataFrame], 
+          B: int, 
+          seed:  Union[int, None] = None) -> None:
+            
+        """Initializes the Heteroskedastic Wild Bootstrap Class
+
+        Args:
+          X (Union[np.ndarray, pd.DataFrame, pd.Series]): Exogeneous variable array or dataframe
+          Y (Union[np.ndarray, pd.DataFrame, pd.Series]): Endogenous variable array or dataframe
+          R (Union[np.ndarray, pd.DataFrame]): Constraint matrix for running bootstrap
+          B (int): bootstrap iterations
+          seed (Union[int, None], optional): Random seed for random weight types. Defaults to None.
+
+        Raises:
+          TypeError: Raise if input arrays are lists
+          TestMatrixNonConformabilityException: Raise if constraint matrix shape does not conform to X
+        """    
+
+        for i in [X, Y]:
+          if isinstance(i, list):
+            raise TypeError(f"{i} cannot be a list")
+
+        if isinstance(X, (pd.DataFrame, pd.Series)):
+          self.X = X.values
+        else:
+          self.X = X
+          
+        if isinstance(Y, (pd.DataFrame, pd.Series)):
+          self.Y = Y.values
+        else:
+          self.Y = Y
+
+        if isinstance(seed, int):
+          np.random.seed(seed)
+
+        self.N = X.shape[0]
+        self.k = X.shape[1]
+        self.B = B
+        self.R = R
+        
+        if self.X.shape[1] != self.R.shape[0]:
+          raise TestMatrixNonConformabilityException("The number of rows in the test matrix R, does not ")
+
+    def get_adjustments(self, bootstrap_type):
+
+        '''
+        Raises: 
+          TestBootstrapTypeException: If non-appropriate bootstrap types are selected
+        '''
+        if bootstrap_type not in ['11', '22', '33']:
+            raise TestBootstrapTypeException("For the heteroskedastic (i.e. non-clustered) wild bootstrap, only types '11', '22' and '33' are supported.")
+        
+        # allow for arbitrary different adjustments for bootstrap and standard t-stat
+        self.tXXinv = np.linalg.inv(np.transpose(self.X) @ self.X)
+        self.resid_multiplier_boot, self.small_sample_correction = _adjust_scores(self.X, self.tXXinv, bootstrap_type[0])
+        if bootstrap_type[0] == bootstrap_type[1]:
+          self.resid_multiplier_stat = self.resid_multiplier_boot
+        else: 
+          self.resid_multiplier_stat = _adjust_scores(self.X, self.tXXinv, bootstrap_type[1])
+
+    def get_uhat(self, impose_null : bool): 
+      
+        '''
+        Raises: 
+          TestHCImposeNullException: If the null is not imposed on the bootstrap dgp
+        '''
+        if impose_null is not True: 
+          raise TestHCImposeNullException('For the heteroskedastic bootstrap, the null needs to be imposed.')
+
+
+        self.tXy = np.transpose(self.X) @ self.Y
+        self.beta_hat = self.tXXinv @ self.tXy 
+        self.uhat = self.Y - self.X @ self.beta_hat
+        
+        
+        self.uhat_stat = self.uhat * self.resid_multiplier_stat
+
+        if impose_null: 
+          self.impose_null = True
+          r = 0
+          self.beta_r = self.beta_hat - self.tXXinv @ self.R * ( 1 / (np.transpose(self.R) @ self.tXXinv @ self.R)) * (np.transpose(self.R) @ self.beta_hat - r)#self.uhat_r = self.Y - self.beta_r 
+          self.uhat_r = self.Y - self.X @ self.beta_r 
+          self.uhat2 = self.uhat_r * self.resid_multiplier_boot
+        else: 
+          self.impose_null = False    
+          self.uhat2 = self.uhat * self.resid_multiplier_boot
+
+    def get_tboot(self, weights_type: Union[str, Callable]):
+
+        if weights_type not in ['rademacher', 'normal']:
+            raise TestHCWeightsException("For the heteroskedastic bootstrap, only weight tyes 'rademacher' and 'normal' are supported, but you provided" + weight_type + ".")
+        self.weights_type = weights_type
+          
+        k = np.where(self.R == 1)
+        self.tXXinvX = self.tXXinv @ np.transpose(self.X)  
+
+        if self.impose_null == True: 
+          beta = self.beta_r.reshape((self.k, 1))
+        else: 
+          beta = self.beta_hat.reshape((self.k, 1))
+
+        yhat = (self.X @ beta).flatten()
+
+        R = self.R.reshape((self.k, 1))
+        self.RXXinvX_2 = np.power(np.transpose(R) @ self.tXXinv @ np.transpose(self.X), 2)
+        #RXXinv_2 = np.power(np.transpose(R) @ self.tXXinv, 2)
+
+        @njit(parallel = True)
+        def _run_hc_bootstrap(B, weights_type, N, X, yhat, uhat2, tXXinv, RXXinvX_2, Rt, small_sample_correction):
+
+            #rng = np.random.default_rng()
+
+            t_boot = np.zeros(B)
+            tXXinvX = tXXinv @ np.transpose(X)
+
+            for b in prange(0, B):
+            # create weights vector. mammen weights not supported via numba
+                v = np.zeros(N)
+                if weights_type == 'rademacher':
+                    for i in range(0, N):
+                        v[i] = np.random.choice(np.array([-1,1]))
+                else:
+                    v = np.zeros(N)
+                    for i in range(0, N):
+                        v[i] = np.random.normal() 
+
+                uhat_boot = uhat2 * v
+                yhat_boot = yhat + uhat_boot
+                beta_boot = tXXinvX  @ yhat_boot
+                resid_boot = yhat_boot - X @ beta_boot
+                cov_v = small_sample_correction * RXXinvX_2 @ np.power(resid_boot, 2)
+                t_boot[b] = (Rt @ beta_boot / np.sqrt(cov_v))[0]
+
+            return t_boot
+
+        self.t_boot = _run_hc_bootstrap(
+            B = self.B, 
+            weights_type = self.weights_type, 
+            N = self.N, 
+            X = self.X,
+            yhat = yhat, 
+            uhat2 = self.uhat2,
+            tXXinv = self.tXXinv, 
+            RXXinvX_2 = self.RXXinvX_2, 
+            Rt = np.transpose(R), 
+            small_sample_correction=self.small_sample_correction
+          )
+ 
+    def get_tstat(self):
+    
+        cov = self.small_sample_correction * self.RXXinvX_2 @ np.power(self.uhat_stat, 2)
+        self.t_stat = (np.transpose(self.R) @ self.beta_hat / np.sqrt(cov))
+          
+    def get_pvalue(self, pval_type = "two-tailed"):
+      
+        if pval_type == "two-tailed":
+            self.pvalue = np.mean(np.abs(self.t_stat) < abs(self.t_boot))
+        elif pval_type == "equal-tailed":
+            pl = np.mean(self.t_stat < self.t_boot)
+            ph = np.mean(self.t_stat > self.t_boot)
+            self.pvalue = 2 * min(pl, ph)
+        elif pval_type == ">":
+            self.pvalue = np.mean(self.t_stat < self.t_boot)
+        else: 
+            self.pvalue = np.mean(self.t_stat > self.t_boot)
+             
+
+def _adjust_scores(X, tXXinv, variant):
+    
+    N = X.shape[0]
+    k = X.shape[1]
+
+    if variant == "1":
+      # HC1
+      resid_multiplier = np.ones(N)
+      small_sample_correction = (N-1) / (N-k)
+    else: 
+      hatmat = X @ tXXinv @ np.transpose(X)
+      diag_hatmat = np.diag(hatmat)
+      small_sample_correction = 1
+      if variant == "2": 
+        # HC2
+        resid_multiplier = 1 / np.sqrt(1-diag_hatmat)
+      elif variant == "3":
+        # HC3
+        resid_multiplier = 1 / (1-diag_hatmat)
+
+    return resid_multiplier, small_sample_correction
+
+
+class WildboottestCL: 
   """
-  Create an object of Wildboottest and get p-value by successively applying
+  Create an object of WildboottestCL and get p-value by successively applying
   methods in the following way: 
   
   Example:
       
       >>> # preliminaries: load libraries and create data
       >>> import numpy as np
-      >>> from wildboottest.wildboottest import Wildboottest
+      >>> from wildboottest.wildboottest import WildboottestCL
       >>> np.random.seed(12312312)
       >>> N = 1000
       >>> k = 3
@@ -36,7 +268,7 @@ class Wildboottest:
       >>> B = 999
 
       >>> # run the wild cluster bootstrap
-      >>> wb = Wildboottest(X = X, Y = Y, cluster = cluster, R = R, B = B)
+      >>> wb = WildboottestCL(X = X, Y = Y, cluster = cluster, R = R, B = B)
       >>> wb.get_scores(bootstrap_type = "11", impose_null = True)
       >>> wb.get_weights(weights_type= "rademacher")
       >>> wb.get_numer()
@@ -70,7 +302,7 @@ class Wildboottest:
         TestMatrixNonConformabilityException: Raise if constraint matrix shape does not conform to X
     """    
       
-    "Initialize the wildboottest class"
+    "Initialize the WildboottestCL class"
     #assert bootstrap_type in ['11', '13', '31', '33']
     #assert impose_null in [True, False]
     
@@ -136,8 +368,8 @@ class Wildboottest:
       y_list.append(Y_g)
       tXgXg_list.append(tXgXg)
       tXgyg_list.append(tXgyg)
-      tXX = tXX + tXgXg
-      tXy = tXy + tXgyg
+      tXX += tXgXg
+      tXy += tXgyg
     
     self.X_list = X_list
     self.Y_list = y_list
@@ -305,9 +537,9 @@ class Wildboottest:
         @jit
         def compute_denom(Cg, H, bootclustid, B, G, v, ssc):
           
-          denom = np.zeros(B + 1)
+          denom = np.zeros(B)
       
-          for b in range(0, B+1):
+          for b in range(0, B):
             Zg = np.zeros(G)
             for ixg, g in enumerate(bootclustid):
               vH = 0
@@ -328,9 +560,9 @@ class Wildboottest:
         for ix, g in enumerate(self.bootclustid):
           self.inv_tXX_tXgXg.append(np.linalg.pinv(self.tXX - self.tXgXg_list[ix]))
       
-        self.denom = np.zeros(self.B + 1)
+        self.denom = np.zeros(self.B)
       
-        for b in range(0, self.B + 1):
+        for b in range(0, self.B):
         
           scores_g_boot = np.zeros((self.G, self.k))
           v_ = self.v[:,b]
@@ -358,8 +590,7 @@ class Wildboottest:
       
   def get_tboot(self):
     
-      t_boot = self.numer / np.sqrt(self.denom)
-      self.t_boot = t_boot[1:(self.B+1)] # drop first element - might be useful for comp. of
+      self.t_boot = self.numer / np.sqrt(self.denom)
 
   def get_vcov(self):
     
@@ -415,8 +646,8 @@ class Wildboottest:
 
 
 def wildboottest(model : 'OLS', 
-                 cluster : Union[np.ndarray, pd.Series, pd.DataFrame], 
                  B:int, 
+                 cluster : Union[np.ndarray, pd.Series, pd.DataFrame, None] = None, 
                  param : Union[str, None] = None, 
                  weights_type: str = 'rademacher',
                  impose_null: bool = True, 
@@ -429,8 +660,9 @@ def wildboottest(model : 'OLS',
 
   Args:
       model (OLS):  A statsmodels regression object
-      cluster (Union[np.ndarray, pd.Series, pd.DataFrame]): A numpy array of dimension one, containing the clustering variable.
       B (int): The number of bootstrap iterations to run
+           cluster (Union[None, np.ndarray, pd.Series, pd.DataFrame], optional): If None (default), a 'heteroskedastic' wild boostrap 
+           is run. For a wild cluster bootstrap, requires a numpy array of dimension one,a  pandas Series or DataFrame, containing the clustering variable.
       param (Union[str, None], optional): A string of length one, containing the test parameter of interest. Defaults to None.
       weights_type (str, optional): The type of bootstrap weights. Either 'rademacher', 'mammen', 'webb' or 'normal'. 
                         'rademacher' by default. Defaults to 'rademacher'.
@@ -466,6 +698,7 @@ def wildboottest(model : 'OLS',
       >>> Y = 1 + X @ beta + u
       >>> cluster = np.random.choice(list(range(0,G)), N)
       >>> model = sm.OLS(Y, X)
+      >>> wildboottest(model, param = "X1", B = 9999)
       >>> wildboottest(model, param = "X1", cluster = cluster, B = 9999)
       >>> wildboottest(model, cluster = cluster, B = 9999)
   """
@@ -483,38 +716,52 @@ def wildboottest(model : 'OLS',
   pvalues = []
   tstats = []
   
-  def generate_stats(param):
+  def generate_stats(param, cluster):
 
-    R = np.zeros(len(xnames))
-    R[xnames.index(param)] = 1
-    # Just test for beta=0
-    
-    # is it possible to fetch the clustering variables from the pre-processed data 
-    # frame, e.g. with 'excluding' observations with missings etc
-    # cluster = ...
-        
-    boot = Wildboottest(X = X, Y = Y, cluster = cluster, 
-                        R = R, B = B, seed = seed)
-    boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null, adj=adj, cluster_adj=cluster_adj)
-    _, _, full_enumeration_warn = boot.get_weights(weights_type = weights_type)
-    boot.get_numer()
-    boot.get_denom()
-    boot.get_tboot()
-    boot.get_vcov()
-    boot.get_tstat()
-    boot.get_pvalue(pval_type = "two-tailed")
-    
-    pvalues.append(boot.pvalue)
-    tstats.append(boot.t_stat[0])
+      R = np.zeros(len(xnames))
+      R[xnames.index(param)] = 1
+      # Just test for beta=0
       
-    return pvalues, tstats, full_enumeration_warn
+      # is it possible to fetch the clustering variables from the pre-processed data 
+      # frame, e.g. with 'excluding' observations with missings etc
+      # cluster = ...
+
+      if cluster is None: 
+      
+          boot = WildboottestHC(X = X, Y = Y, R = R, B = B, seed = seed)
+          boot.get_adjustments(bootstrap_type = bootstrap_type)
+          boot.get_uhat(impose_null = impose_null)
+          boot.get_tboot(weights_type = weights_type)
+          boot.get_tstat()
+          boot.get_pvalue(pval_type = "two-tailed")  
+          full_enumeration_warn = False
+
+      else: 
+
+          print('Estimate wild cluster bootstrap: ')
+
+          boot = WildboottestCL(X = X, Y = Y, cluster = cluster, 
+                              R = R, B = B, seed = seed)
+          boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null, adj=adj, cluster_adj=cluster_adj)
+          _, _, full_enumeration_warn = boot.get_weights(weights_type = weights_type)
+          boot.get_numer()
+          boot.get_denom()
+          boot.get_tboot()
+          boot.get_vcov()
+          boot.get_tstat()
+          boot.get_pvalue(pval_type = "two-tailed")
+        
+      pvalues.append(boot.pvalue)
+      tstats.append(boot.t_stat[0])
+      
+      return pvalues, tstats, full_enumeration_warn
     
   if param is None:
     for x in xnames:
-      pvalues, tstats, full_enumeration_warn = generate_stats(x)
+      pvalues, tstats, full_enumeration_warn = generate_stats(x, cluster=cluster)
     param = xnames
   elif isinstance(param, str):
-    pvalues, tstats, full_enumeration_warn = generate_stats(param)
+    pvalues, tstats, full_enumeration_warn = generate_stats(param, cluster=cluster)
   else:
     raise Exception("`param` not correctly specified")
   

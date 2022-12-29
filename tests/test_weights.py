@@ -1,6 +1,6 @@
 import pytest
 from wildboottest.weights import WildDrawFunctionException, draw_weights, wild_draw_fun_dict
-from wildboottest.wildboottest import Wildboottest
+from wildboottest.wildboottest import WildboottestCL
 import numpy as np
 import pandas as pd
 
@@ -46,7 +46,7 @@ def test_different_weights(data):
     results_dict = {}
 
     for w in ts:
-        boot = Wildboottest(X = X, Y = y, cluster = cluster, bootcluster = bootcluster, R = R, B = 99999, seed = 12341)
+        boot = WildboottestCL(X = X, Y = y, cluster = cluster, bootcluster = bootcluster, R = R, B = 99999, seed = 12341)
         boot.get_scores(bootstrap_type = "11", impose_null = True)
         boot.get_weights(weights_type = w)
         boot.get_numer()
