@@ -1,7 +1,7 @@
 from __future__ import annotations # add so that we can use type annotations as strings to get rid of circular imports
 import numpy as np
 import pandas as pd
-from numba import jit
+from numba import jit, njit, prange
 from wildboottest.weights import draw_weights
 import warnings
 from typing import Union, Tuple, Callable
@@ -10,6 +10,9 @@ class WildDrawFunctionException(Exception):
     pass
 
 class TestMatrixNonConformabilityException(Exception):
+  pass
+
+class TestBootstrapTypeException(Exception):
   pass
 
 class WildboottestHC: 
@@ -90,9 +93,16 @@ class WildboottestHC:
 
     def get_adjustments(self, bootstrap_type):
 
+        '''
+        Raises: 
+          TestBootstrapTypeException: If non-appropriate bootstrap types are selected
+        '''
+        if bootstrap_type not in ['11', '22', '33']:
+            raise TestBootstrapTypeException("For the heteroskedastic wild bootstrap, only types '11', '22' and '33' are supported.")
+        
         # allow for arbitrary different adjustments for bootstrap and standard t-stat
         self.tXXinv = np.linalg.inv(np.transpose(self.X) @ self.X)
-        self.resid_multiplier_boot = _adjust_scores(self.X, self.tXXinv, bootstrap_type[0])
+        self.resid_multiplier_boot, self.small_sample_correction = _adjust_scores(self.X, self.tXXinv, bootstrap_type[0])
         if bootstrap_type[0] == bootstrap_type[1]:
           self.resid_multiplier_stat = self.resid_multiplier_boot
         else: 
@@ -133,13 +143,15 @@ class WildboottestHC:
 
         R = self.R.reshape((self.k, 1))
         self.RXXinvX_2 = np.power(np.transpose(R) @ self.tXXinv @ np.transpose(self.X), 2)
-          
-        @jit  
-        def _run_hc_bootstrap(B, weights_type, N, X, yhat, uhat2, tXXinv, RXXinvX_2, Rt):
+        #RXXinv_2 = np.power(np.transpose(R) @ self.tXXinv, 2)
+
+        @njit 
+        def _run_hc_bootstrap(B, weights_type, N, X, yhat, uhat2, tXXinv, RXXinvX_2, Rt, small_sample_correction):
 
             #rng = np.random.default_rng()
 
             t_boot = np.zeros(B)
+
             for b in range(0, B):
             # create weights vector. mammen weights not supported via numba
                 if weights_type == 'rademacher':
@@ -157,8 +169,18 @@ class WildboottestHC:
                 yhat_boot = yhat + uhat_boot
                 beta_boot = tXXinv @ (np.transpose(X) @ yhat_boot)
                 resid_boot = yhat_boot - X @ beta_boot
-                cov_v = RXXinvX_2 @ np.power(resid_boot, 2)
-                t_boot[b] = (Rt @ beta_boot / np.sqrt(cov_v)).item()
+                cov_v = small_sample_correction * RXXinvX_2 @ np.power(resid_boot, 2)
+                t_boot[b] = (Rt @ beta_boot / np.sqrt(cov_v))[0]
+
+                # note: beta_boot = beta_hat + (X'X)^(-^1) X' u2 :* v= beta_hat + E
+                #score2 = np.transpose(X) @ uhat2
+                #beta_boot = tXXinv @ np.transpose(X) @ X @  beta_hat + tXXinv @ (np.transpose(X) @ uhat_boot)
+                #beta_boot = beta_hat + tXXinv @ np.transpose(X) @ uhat_boot 
+                #score_b = np.transpose(X) @ uhat_boot # k x 1
+                #E = tXXinv @ score_b # k x 1
+                #beta_boot = beta_hat + E # k x 1
+                #cov_v = RXXinv_2 @ np.power(score_b, 2) # 1 x 1
+                #t_boot[b] = ((np.transpose(R) @ beta_boot) / np.sqrt(cov_v))[0] #1 x 1
 
             return t_boot
 
@@ -171,12 +193,13 @@ class WildboottestHC:
             uhat2 = self.uhat2,
             tXXinv = self.tXXinv, 
             RXXinvX_2 = self.RXXinvX_2, 
-            Rt = np.transpose(self.R)
+            Rt = np.transpose(R), 
+            small_sample_correction=self.small_sample_correction
           )
  
     def get_tstat(self):
     
-        cov = self.RXXinvX_2 @ np.power(self.uhat_stat, 2)
+        cov = self.small_sample_correction * self.RXXinvX_2 @ np.power(self.uhat_stat, 2)
         self.t_stat = (np.transpose(self.R) @ self.beta_hat / np.sqrt(cov))
           
     def get_pvalue(self, pval_type = "two-tailed"):
@@ -196,12 +219,16 @@ class WildboottestHC:
 def _adjust_scores(X, tXXinv, variant):
     
     N = X.shape[0]
+    k = X.shape[1]
+
     if variant == "1":
       # HC1
       resid_multiplier = np.ones(N)
+      small_sample_correction = (N-1) / (N-k)
     else: 
       hatmat = X @ tXXinv @ np.transpose(X)
       diag_hatmat = np.diag(hatmat)
+      small_sample_correction = 1
       if variant == "2": 
         # HC2
         resid_multiplier = 1 / np.sqrt(1-diag_hatmat)
@@ -209,7 +236,7 @@ def _adjust_scores(X, tXXinv, variant):
         # HC2
         resid_multiplier = 1 / (1-diag_hatmat)
 
-    return resid_multiplier
+    return resid_multiplier, small_sample_correction
 
 
 class WildboottestCL: 
