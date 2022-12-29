@@ -162,6 +162,7 @@ class WildboottestHC:
             #rng = np.random.default_rng()
 
             t_boot = np.zeros(B)
+            tXXinvX = tXXinv @ np.transpose(X)
 
             for b in prange(0, B):
             # create weights vector. mammen weights not supported via numba
@@ -183,7 +184,7 @@ class WildboottestHC:
 
                 uhat_boot = uhat2 * v
                 yhat_boot = yhat + uhat_boot
-                beta_boot = tXXinv @ (np.transpose(X) @ yhat_boot)
+                beta_boot = tXXinvX  @ yhat_boot
                 resid_boot = yhat_boot - X @ beta_boot
                 cov_v = small_sample_correction * RXXinvX_2 @ np.power(resid_boot, 2)
                 t_boot[b] = (Rt @ beta_boot / np.sqrt(cov_v))[0]
