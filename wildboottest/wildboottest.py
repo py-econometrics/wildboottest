@@ -15,6 +15,9 @@ class TestMatrixNonConformabilityException(Exception):
 class TestBootstrapTypeException(Exception):
   pass
 
+class TestHCImposeNullException(Exception):
+  pass
+
 class WildboottestHC: 
 
     """
@@ -98,7 +101,7 @@ class WildboottestHC:
           TestBootstrapTypeException: If non-appropriate bootstrap types are selected
         '''
         if bootstrap_type not in ['11', '22', '33']:
-            raise TestBootstrapTypeException("For the heteroskedastic wild bootstrap, only types '11', '22' and '33' are supported.")
+            raise TestBootstrapTypeException("For the heteroskedastic (i.e. non-clustered) wild bootstrap, only types '11', '22' and '33' are supported.")
         
         # allow for arbitrary different adjustments for bootstrap and standard t-stat
         self.tXXinv = np.linalg.inv(np.transpose(self.X) @ self.X)
@@ -110,6 +113,14 @@ class WildboottestHC:
 
     def get_uhat(self, impose_null : bool): 
       
+        '''
+        Raises: 
+          TestHCImposeNullException: If the null is not imposed on the bootstrap dgp
+        '''
+        if impose_null == True: 
+          raise TestHCImposeNullException('For the heteroskedastic bootstrap, the null needs to be imposed.')
+
+
         self.tXy = np.transpose(self.X) @ self.Y
         self.beta_hat = self.tXXinv @ self.tXy 
         self.uhat = self.Y - self.X @ self.beta_hat
