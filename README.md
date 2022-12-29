@@ -48,57 +48,35 @@ pip install wildboottest
 ## Example 
 
 ```python
-from wildboottest.wildboottest import wildboottest
-import statsmodels.api as sm
-import numpy as np
 import pandas as pd
+import statsmodels.formula.api as sm
+from wildboottest.wildboottest import wildboottest
 
-# create data
-np.random.seed(12312312)
-N = 1000
-k = 10
-G = 25
-X = np.random.normal(0, 1, N * k).reshape((N,k))
-X = pd.DataFrame(X)
-X.rename(columns = {0:"X1"}, inplace = True)
-beta = np.random.normal(0,1,k)
-beta[0] = 0.005
-u = np.random.normal(0,1,N)
-Y = 1 + X @ beta + u
-cluster = np.random.choice(list(range(0,G)), N)
+df = pd.read_csv("https://raw.github.com/vincentarelbundock/Rdatasets/master/csv/sandwich/PetersenCL.csv")
+model = sm.ols(formula='y ~ x', data=df)
 
-# estimation
-model = sm.OLS(Y, X)
+wildboottest(model, param = "x", cluster = df.firm, B = 9999, bootstrap_type = '11')
+# | param   |   statistic |   p-value |
+# |:--------|------------:|----------:|
+# | x       |      20.453 |     0.000 |
 
-wildboottest(model, param = "X1", cluster = cluster, B = 9999, bootstrap_type = "11")
-#   param              statistic   p-value
-# 0    X1  [-1.0530803154504016]  0.308831
+wildboottest(model, param = "x", cluster = df.firm, B = 9999, bootstrap_type = '31')
+# | param   |   statistic |   p-value |
+# |:--------|------------:|----------:|
+# | x       |      30.993 |     0.000 |
 
-wildboottest(model, param = "X1", cluster = cluster, B = 9999, bootstrap_type = "31")
-#   param              statistic   p-value
-# 0    X1  [-1.0530803154504016]  0.307631
+# bootstrap inference for all coefficients
+wildboottest(model, cluster = df.firm, B = 9999, bootstrap_type = '31')
+# | param     |   statistic |   p-value |
+# |:----------|------------:|----------:|
+# | Intercept |       0.443 |     0.655 |
+# | x         |      20.453 |     0.000 |
 
-wildboottest(model, param = "X1", cluster = cluster, B = 9999, bootstrap_type = "33")
-#   param              statistic   p-value
-# 0    X1  [-1.0394791020434824]  0.294286
+# non-clustered wild bootstrap inference
+wildboottest(model, B = 9999, bootstrap_type = '11')
+# | param     |   statistic |   p-value |
+# |:----------|------------:|----------:|
+# | Intercept |       1.047 |     0.295 |
+# | x         |      36.448 |     0.000 |
 
-
-wildboottest(model, cluster = cluster, B = 9999)
-#   param              statistic   p-value
-# 0    X1  [-1.0530803154504016]  0.315132
-# 1     1    [-18.5149486170657]  0.000000
-# 2     2    [7.831855813581191]  0.000000
-# 3     3   [-16.85188951397906]  0.000000
-# 4     4  [-12.721095348008182]  0.000000
-# 5     5    [1.200524160940055]  0.243624
-# 6     6    [6.870946666836135]  0.000000
-# 7     7   [-31.31653422266621]  0.000000
-# 8     8    [10.26443257212472]  0.000000
-# 9     9  [-20.650361366939535]  0.000000
-
-# non-clustered bootstrap 
-wildboottest(model, param = "X1", B = 9999, bootstrap_type = "33")
-#       statistic   p-value
-# param                     
-# X1     -1.010951  0.314931
 ```
