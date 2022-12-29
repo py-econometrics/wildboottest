@@ -156,25 +156,30 @@ class WildboottestHC:
         self.RXXinvX_2 = np.power(np.transpose(R) @ self.tXXinv @ np.transpose(self.X), 2)
         #RXXinv_2 = np.power(np.transpose(R) @ self.tXXinv, 2)
 
-        @njit 
+        @njit(parallel = True)
         def _run_hc_bootstrap(B, weights_type, N, X, yhat, uhat2, tXXinv, RXXinvX_2, Rt, small_sample_correction):
 
             #rng = np.random.default_rng()
 
             t_boot = np.zeros(B)
 
-            for b in range(0, B):
+            for b in prange(0, B):
             # create weights vector. mammen weights not supported via numba
+                v = np.zeros(N)
                 if weights_type == 'rademacher':
-                    v = np.random.choice(np.array([-1,1]),size=N, replace=True)
+                    for i in range(0, N):
+                        v[i] = np.random.choice(np.array([-1,1]))
+                    ##v = np.random.choice(np.array([-1,1]),size=N, replace=True)
                 #elif weights_type == "webb":
                 #    v = np.random.choice(
                 #        a = np.concatenate(np.array([-np.sqrt(np.array([3,2,1]) / 2), np.sqrt(np.array([1,2,3]) / 2)])),
                 #        replace=True,
                 #        size=N
                 #    )
-                # else:
-                #    v = np.random.normal(size=N) 
+                else:
+                    v = np.zeros(N)
+                    for i in range(0, N):
+                        v[i] = np.random.normal() 
 
                 uhat_boot = uhat2 * v
                 yhat_boot = yhat + uhat_boot
