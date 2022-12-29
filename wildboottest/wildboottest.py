@@ -18,6 +18,9 @@ class TestBootstrapTypeException(Exception):
 class TestHCImposeNullException(Exception):
   pass
 
+class TestHCWeightsException(Exception):
+  pass
+
 class WildboottestHC: 
 
     """
@@ -140,6 +143,8 @@ class WildboottestHC:
 
     def get_tboot(self, weights_type: Union[str, Callable]):
 
+        if weights_type not in ['rademacher', 'normal']:
+            raise TestHCWeightsException("For the heteroskedastic bootstrap, only weight tyes 'rademacher' and 'normal' are supported, but you provided" + weight_type + ".")
         self.weights_type = weights_type
           
         k = np.where(self.R == 1)
@@ -170,13 +175,6 @@ class WildboottestHC:
                 if weights_type == 'rademacher':
                     for i in range(0, N):
                         v[i] = np.random.choice(np.array([-1,1]))
-                    ##v = np.random.choice(np.array([-1,1]),size=N, replace=True)
-                #elif weights_type == "webb":
-                #    v = np.random.choice(
-                #        a = np.concatenate(np.array([-np.sqrt(np.array([3,2,1]) / 2), np.sqrt(np.array([1,2,3]) / 2)])),
-                #        replace=True,
-                #        size=N
-                #    )
                 else:
                     v = np.zeros(N)
                     for i in range(0, N):
@@ -188,16 +186,6 @@ class WildboottestHC:
                 resid_boot = yhat_boot - X @ beta_boot
                 cov_v = small_sample_correction * RXXinvX_2 @ np.power(resid_boot, 2)
                 t_boot[b] = (Rt @ beta_boot / np.sqrt(cov_v))[0]
-
-                # note: beta_boot = beta_hat + (X'X)^(-^1) X' u2 :* v= beta_hat + E
-                #score2 = np.transpose(X) @ uhat2
-                #beta_boot = tXXinv @ np.transpose(X) @ X @  beta_hat + tXXinv @ (np.transpose(X) @ uhat_boot)
-                #beta_boot = beta_hat + tXXinv @ np.transpose(X) @ uhat_boot 
-                #score_b = np.transpose(X) @ uhat_boot # k x 1
-                #E = tXXinv @ score_b # k x 1
-                #beta_boot = beta_hat + E # k x 1
-                #cov_v = RXXinv_2 @ np.power(score_b, 2) # 1 x 1
-                #t_boot[b] = ((np.transpose(R) @ beta_boot) / np.sqrt(cov_v))[0] #1 x 1
 
             return t_boot
 
