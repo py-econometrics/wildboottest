@@ -260,34 +260,34 @@ def test_data_is_list():
   with pytest.raises(TypeError):
     WildboottestCL(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
 
-@pytest.mark.skip(reason="exhaustive runtime")
-def test_seeds():
-  
-  df, B = data(15)
-  cluster = df['cluster']
-  X = df[['intercept', 'X1', 'X2']]
-  Y = df['Y']
-  R = np.array([0,1,0])
-  
-  results_dict = []
-
-  for s in range(1,10000):
-    for w in ts:
-      boot = WildboottestCL(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = s)
-      boot.get_scores(bootstrap_type = "11", impose_null = True)
-      boot.get_weights(weights_type = w)
-      boot.get_numer()
-      boot.get_denom()
-      boot.get_tboot()
-      boot.get_vcov()
-      boot.get_tstat()
-      boot.get_pvalue(pval_type = "two-tailed")
-      results_dict.append(boot.pvalue)
-        
-  results_series = pd.Series(results_dict)
-  mapd = results_series.mad() / results_series.mean()
-  assert  mapd <= .1 # make sure mean absolute percentage deviation is less than 10% (ad hoc)
-  
+#@pytest.mark.skip(reason="exhaustive runtime")
+#def test_seeds():
+#  
+#  df, B = data(15)
+#  cluster = df['cluster']
+#  X = df[['intercept', 'X1', 'X2']]
+#  Y = df['Y']
+#  R = np.array([0,1,0])
+#  
+#  results_dict = []
+#
+#  for s in range(1,10000):
+#    for w in ts:
+#      boot = WildboottestCL(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = s)
+#      boot.get_scores(bootstrap_type = "11", impose_null = True)
+#      boot.get_weights(weights_type = w)
+#      boot.get_numer()
+#      boot.get_denom()
+#      boot.get_tboot()
+#      boot.get_vcov()
+#      boot.get_tstat()
+#      boot.get_pvalue(pval_type = "two-tailed")
+#      results_dict.append(boot.pvalue)
+#        
+#  results_series = pd.Series(results_dict)
+#  mapd = results_series.mad() / results_series.mean()
+#  assert  mapd <= .1 # make sure mean absolute percentage deviation is less than 10% (ad hoc)
+#  
 # if __name__ == '__main__':
 #   test_r_vs_py_stochastic()
 #   test_r_vs_py_deterministic()

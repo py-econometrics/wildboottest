@@ -238,7 +238,7 @@ def _adjust_scores(X, tXXinv, variant):
         # HC2
         resid_multiplier = 1 / np.sqrt(1-diag_hatmat)
       elif variant == "3":
-        # HC2
+        # HC3
         resid_multiplier = 1 / (1-diag_hatmat)
 
     return resid_multiplier, small_sample_correction
@@ -368,8 +368,8 @@ class WildboottestCL:
       y_list.append(Y_g)
       tXgXg_list.append(tXgXg)
       tXgyg_list.append(tXgyg)
-      tXX = tXX + tXgXg
-      tXy = tXy + tXgyg
+      tXX += tXgXg
+      tXy += tXgyg
     
     self.X_list = X_list
     self.Y_list = y_list
