@@ -40,14 +40,12 @@ wild_draw_fun_dict = {
   
 def draw_weights(t : Union[str, Callable], full_enumeration: bool, N_G_bootcluster: int, boot_iter: int) -> Tuple[np.ndarray, int]:
     """draw bootstrap weights
-
     Args:
         t (str|callable): the type of the weights distribution. Either 'rademacher', 'mammen', 'norm' or 'webb'
         If `t` is a callable, must be a function of one variable, `n`, and return a vector of size `n`
         full_enumeration (bool): should deterministic full enumeration be employed
         N_G_bootcluster (int): the number of bootstrap clusters
         boot_iter (int): the number of bootstrap iterations
-
     Returns:
         Tuple[np.ndarray, int]: a matrix of dimension N_G_bootcluster x (boot_iter + 1) and the number of iterations
     """    
@@ -82,6 +80,6 @@ def draw_weights(t : Union[str, Callable], full_enumeration: bool, N_G_bootclust
     
     # update boot_iter (B) - only relevant in enumeration case
     boot_iter = v0.shape[1] 
-    v = np.insert(v0, 0, 1,axis = 1)
+    #v = np.insert(v0, 0, 1,axis = 1)
 
-    return v, boot_iter
+    return v0, boot_iter
