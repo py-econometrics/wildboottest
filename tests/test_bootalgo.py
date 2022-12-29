@@ -259,6 +259,7 @@ def test_data_is_list():
   with pytest.raises(TypeError):
     WildboottestCL(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
 
+@pytest.mark.skip(reason="exhaustive runtime")
 def test_seeds():
   
   df, B = data(15)
