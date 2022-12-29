@@ -58,13 +58,14 @@ def hc_vs_cluster_bootstrap():
   R = np.array([0,1,0])
 
   fit = sm.OLS(Y, X)
+  # all allowed types
+  cl = wildboottest(fit, param = "X1", cluster = cluster, bootstrap_type='11')
 
-  types = ['11', '13', '31', '33']
+  types = ['11', '22', '33']
 
   for type in types: 
 
       hc = wildboottest(fit, param = "X1", bootstrap_type=type)
-      cl = wildboottest(fit, param = "X1", cluster = cluster, bootstrap_type=type)
 
       assert reldiff(hc.xs('X1')[0], cl.xs('X1')[0])
       assert reldiff(hc.xs('X1')[1], cl.xs('X1')[1])
