@@ -117,7 +117,7 @@ class WildboottestHC:
         Raises: 
           TestHCImposeNullException: If the null is not imposed on the bootstrap dgp
         '''
-        if impose_null == True: 
+        if impose_null is not True: 
           raise TestHCImposeNullException('For the heteroskedastic bootstrap, the null needs to be imposed.')
 
 
