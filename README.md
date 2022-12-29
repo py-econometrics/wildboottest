@@ -18,12 +18,13 @@ It has similar, but more limited functionality than Stata's [boottest](https://g
     WCU13, WCU31 and WCU33.
 -   CRV1 and CRV3 robust variance estimation, including the CRV3-Jackknife as 
     described in [MacKinnon, Nielsen & Webb (2022)](https://arxiv.org/pdf/2205.03288.pdf).
+- The (non-clustered) wild bootstrap for OLS ([Wu, 1986](https://projecteuclid.org/journals/annals-of-statistics/volume-14/issue-4/Jackknife-Bootstrap-and-Other-Resampling-Methods-in-Regression-Analysis/10.1214/aos/1176350142.full)).
+
     
 At the moment, `wildboottest` only computes wild cluster bootstrapped *p-values*, and no confidence intervals. 
 
 Other features that are currently not supported: 
 
-- The (non-clustered) wild bootstrap for OLS ([Wu, 1986](https://projecteuclid.org/journals/annals-of-statistics/volume-14/issue-4/Jackknife-Bootstrap-and-Other-Resampling-Methods-in-Regression-Analysis/10.1214/aos/1176350142.full)).
 -   The subcluster bootstrap ([MacKinnon and Webb 2018](https://academic.oup.com/ectj/article-abstract/21/2/114/5078969?login=false)).
 -   Confidence intervals formed by inverting the test and iteratively
     searching for bounds.
@@ -94,4 +95,10 @@ wildboottest(model, cluster = cluster, B = 9999)
 # 7     7   [-31.31653422266621]  0.000000
 # 8     8    [10.26443257212472]  0.000000
 # 9     9  [-20.650361366939535]  0.000000
+
+# non-clustered bootstrap 
+wildboottest(model, param = "X1", B = 9999, bootstrap_type = "33")
+#       statistic   p-value
+# param                     
+# X1     -1.010951  0.314931
 ```
