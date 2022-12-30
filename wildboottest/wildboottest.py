@@ -23,8 +23,7 @@ class TestHCWeightsException(Exception):
 
 class WildboottestHC: 
 
-    """
-    Create an object of WildboottestHC and get p-value by successively applying
+    """Create an object of WildboottestHC and get p-value by successively applying
     methods in the following way: 
   
     Example:
@@ -43,7 +42,6 @@ class WildboottestHC:
       >>> R = np.array([1, 0, 0])
       >>> B = 999
 
-      >>> # run the wild bootstrap
       >>> wb = WildboottestHC(X = X, Y = Y, R = R, B = B)
       >>> wb.get_adjustments(bootstrap_type = '11')
       >>> wb.get_uhat(impose_null = True)
@@ -245,13 +243,11 @@ def _adjust_scores(X, tXXinv, variant):
 
 
 class WildboottestCL: 
-  """
-  Create an object of WildboottestCL and get p-value by successively applying
+  """Create an object of WildboottestCL and get p-value by successively applying
   methods in the following way: 
   
   Example:
       
-      >>> # preliminaries: load libraries and create data
       >>> import numpy as np
       >>> from wildboottest.wildboottest import WildboottestCL
       >>> np.random.seed(12312312)
@@ -267,7 +263,6 @@ class WildboottestCL:
       >>> R = np.array([1, 0, 0])
       >>> B = 999
 
-      >>> # run the wild cluster bootstrap
       >>> wb = WildboottestCL(X = X, Y = Y, cluster = cluster, R = R, B = B)
       >>> wb.get_scores(bootstrap_type = "11", impose_null = True)
       >>> wb.get_weights(weights_type= "rademacher")
@@ -661,7 +656,7 @@ def wildboottest(model : 'OLS',
   Args:
       model (OLS):  A statsmodels regression object
       B (int): The number of bootstrap iterations to run
-           cluster (Union[None, np.ndarray, pd.Series, pd.DataFrame], optional): If None (default), a 'heteroskedastic' wild boostrap 
+      cluster (Union[None, np.ndarray, pd.Series, pd.DataFrame], optional): If None (default), a 'heteroskedastic' wild boostrap 
            is run. For a wild cluster bootstrap, requires a numpy array of dimension one,a  pandas Series or DataFrame, containing the clustering variable.
       param (Union[str, None], optional): A string of length one, containing the test parameter of interest. Defaults to None.
       weights_type (str, optional): The type of bootstrap weights. Either 'rademacher', 'mammen', 'webb' or 'normal'. 
@@ -737,8 +732,6 @@ def wildboottest(model : 'OLS',
           full_enumeration_warn = False
 
       else: 
-
-          print('Estimate wild cluster bootstrap: ')
 
           boot = WildboottestCL(X = X, Y = Y, cluster = cluster, 
                               R = R, B = B, seed = seed)
