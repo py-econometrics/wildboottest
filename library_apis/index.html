@@ -466,21 +466,13 @@
           </td>
         </tr>
         <tr>
-          <td><code>cluster</code></td>
-          <td>
-                <code><span title="typing.Union">Union</span>[<span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span>, <span title="pandas">pd</span>.<span title="pandas.Series">Series</span>, <span title="pandas">pd</span>.<span title="pandas.DataFrame">DataFrame</span>]</code>
-          </td>
-          <td><p>A numpy array of dimension one, containing the clustering variable.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
           <td><code>B</code></td>
           <td>
                 <code>int</code>
           </td>
-          <td><p>The number of bootstrap iterations to run</p></td>
+          <td><p>The number of bootstrap iterations to run
+ cluster (Union[None, np.ndarray, pd.Series, pd.DataFrame], optional): If None (default), a 'heteroskedastic' wild boostrap 
+ is run. For a wild cluster bootstrap, requires a numpy array of dimension one,a  pandas Series or DataFrame, containing the clustering variable.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -601,133 +593,150 @@
 &gt;&gt;&gt; Y = 1 + X @ beta + u
 &gt;&gt;&gt; cluster = np.random.choice(list(range(0,G)), N)
 &gt;&gt;&gt; model = sm.OLS(Y, X)
+&gt;&gt;&gt; wildboottest(model, param = "X1", B = 9999)
 &gt;&gt;&gt; wildboottest(model, param = "X1", cluster = cluster, B = 9999)
 &gt;&gt;&gt; wildboottest(model, cluster = cluster, B = 9999)
 </code></pre>
 
       <details class="quote">
         <summary>Source code in <code>wildboottest\wildboottest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">417</span>
-<span class="normal">418</span>
-<span class="normal">419</span>
-<span class="normal">420</span>
-<span class="normal">421</span>
-<span class="normal">422</span>
-<span class="normal">423</span>
-<span class="normal">424</span>
-<span class="normal">425</span>
-<span class="normal">426</span>
-<span class="normal">427</span>
-<span class="normal">428</span>
-<span class="normal">429</span>
-<span class="normal">430</span>
-<span class="normal">431</span>
-<span class="normal">432</span>
-<span class="normal">433</span>
-<span class="normal">434</span>
-<span class="normal">435</span>
-<span class="normal">436</span>
-<span class="normal">437</span>
-<span class="normal">438</span>
-<span class="normal">439</span>
-<span class="normal">440</span>
-<span class="normal">441</span>
-<span class="normal">442</span>
-<span class="normal">443</span>
-<span class="normal">444</span>
-<span class="normal">445</span>
-<span class="normal">446</span>
-<span class="normal">447</span>
-<span class="normal">448</span>
-<span class="normal">449</span>
-<span class="normal">450</span>
-<span class="normal">451</span>
-<span class="normal">452</span>
-<span class="normal">453</span>
-<span class="normal">454</span>
-<span class="normal">455</span>
-<span class="normal">456</span>
-<span class="normal">457</span>
-<span class="normal">458</span>
-<span class="normal">459</span>
-<span class="normal">460</span>
-<span class="normal">461</span>
-<span class="normal">462</span>
-<span class="normal">463</span>
-<span class="normal">464</span>
-<span class="normal">465</span>
-<span class="normal">466</span>
-<span class="normal">467</span>
-<span class="normal">468</span>
-<span class="normal">469</span>
-<span class="normal">470</span>
-<span class="normal">471</span>
-<span class="normal">472</span>
-<span class="normal">473</span>
-<span class="normal">474</span>
-<span class="normal">475</span>
-<span class="normal">476</span>
-<span class="normal">477</span>
-<span class="normal">478</span>
-<span class="normal">479</span>
-<span class="normal">480</span>
-<span class="normal">481</span>
-<span class="normal">482</span>
-<span class="normal">483</span>
-<span class="normal">484</span>
-<span class="normal">485</span>
-<span class="normal">486</span>
-<span class="normal">487</span>
-<span class="normal">488</span>
-<span class="normal">489</span>
-<span class="normal">490</span>
-<span class="normal">491</span>
-<span class="normal">492</span>
-<span class="normal">493</span>
-<span class="normal">494</span>
-<span class="normal">495</span>
-<span class="normal">496</span>
-<span class="normal">497</span>
-<span class="normal">498</span>
-<span class="normal">499</span>
-<span class="normal">500</span>
-<span class="normal">501</span>
-<span class="normal">502</span>
-<span class="normal">503</span>
-<span class="normal">504</span>
-<span class="normal">505</span>
-<span class="normal">506</span>
-<span class="normal">507</span>
-<span class="normal">508</span>
-<span class="normal">509</span>
-<span class="normal">510</span>
-<span class="normal">511</span>
-<span class="normal">512</span>
-<span class="normal">513</span>
-<span class="normal">514</span>
-<span class="normal">515</span>
-<span class="normal">516</span>
-<span class="normal">517</span>
-<span class="normal">518</span>
-<span class="normal">519</span>
-<span class="normal">520</span>
-<span class="normal">521</span>
-<span class="normal">522</span>
-<span class="normal">523</span>
-<span class="normal">524</span>
-<span class="normal">525</span>
-<span class="normal">526</span>
-<span class="normal">527</span>
-<span class="normal">528</span>
-<span class="normal">529</span>
-<span class="normal">530</span>
-<span class="normal">531</span>
-<span class="normal">532</span>
-<span class="normal">533</span>
-<span class="normal">534</span>
-<span class="normal">535</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">wildboottest</span><span class="p">(</span><span class="n">model</span> <span class="p">:</span> <span class="s1">&#39;OLS&#39;</span><span class="p">,</span> 
-                 <span class="n">cluster</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> 
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">648</span>
+<span class="normal">649</span>
+<span class="normal">650</span>
+<span class="normal">651</span>
+<span class="normal">652</span>
+<span class="normal">653</span>
+<span class="normal">654</span>
+<span class="normal">655</span>
+<span class="normal">656</span>
+<span class="normal">657</span>
+<span class="normal">658</span>
+<span class="normal">659</span>
+<span class="normal">660</span>
+<span class="normal">661</span>
+<span class="normal">662</span>
+<span class="normal">663</span>
+<span class="normal">664</span>
+<span class="normal">665</span>
+<span class="normal">666</span>
+<span class="normal">667</span>
+<span class="normal">668</span>
+<span class="normal">669</span>
+<span class="normal">670</span>
+<span class="normal">671</span>
+<span class="normal">672</span>
+<span class="normal">673</span>
+<span class="normal">674</span>
+<span class="normal">675</span>
+<span class="normal">676</span>
+<span class="normal">677</span>
+<span class="normal">678</span>
+<span class="normal">679</span>
+<span class="normal">680</span>
+<span class="normal">681</span>
+<span class="normal">682</span>
+<span class="normal">683</span>
+<span class="normal">684</span>
+<span class="normal">685</span>
+<span class="normal">686</span>
+<span class="normal">687</span>
+<span class="normal">688</span>
+<span class="normal">689</span>
+<span class="normal">690</span>
+<span class="normal">691</span>
+<span class="normal">692</span>
+<span class="normal">693</span>
+<span class="normal">694</span>
+<span class="normal">695</span>
+<span class="normal">696</span>
+<span class="normal">697</span>
+<span class="normal">698</span>
+<span class="normal">699</span>
+<span class="normal">700</span>
+<span class="normal">701</span>
+<span class="normal">702</span>
+<span class="normal">703</span>
+<span class="normal">704</span>
+<span class="normal">705</span>
+<span class="normal">706</span>
+<span class="normal">707</span>
+<span class="normal">708</span>
+<span class="normal">709</span>
+<span class="normal">710</span>
+<span class="normal">711</span>
+<span class="normal">712</span>
+<span class="normal">713</span>
+<span class="normal">714</span>
+<span class="normal">715</span>
+<span class="normal">716</span>
+<span class="normal">717</span>
+<span class="normal">718</span>
+<span class="normal">719</span>
+<span class="normal">720</span>
+<span class="normal">721</span>
+<span class="normal">722</span>
+<span class="normal">723</span>
+<span class="normal">724</span>
+<span class="normal">725</span>
+<span class="normal">726</span>
+<span class="normal">727</span>
+<span class="normal">728</span>
+<span class="normal">729</span>
+<span class="normal">730</span>
+<span class="normal">731</span>
+<span class="normal">732</span>
+<span class="normal">733</span>
+<span class="normal">734</span>
+<span class="normal">735</span>
+<span class="normal">736</span>
+<span class="normal">737</span>
+<span class="normal">738</span>
+<span class="normal">739</span>
+<span class="normal">740</span>
+<span class="normal">741</span>
+<span class="normal">742</span>
+<span class="normal">743</span>
+<span class="normal">744</span>
+<span class="normal">745</span>
+<span class="normal">746</span>
+<span class="normal">747</span>
+<span class="normal">748</span>
+<span class="normal">749</span>
+<span class="normal">750</span>
+<span class="normal">751</span>
+<span class="normal">752</span>
+<span class="normal">753</span>
+<span class="normal">754</span>
+<span class="normal">755</span>
+<span class="normal">756</span>
+<span class="normal">757</span>
+<span class="normal">758</span>
+<span class="normal">759</span>
+<span class="normal">760</span>
+<span class="normal">761</span>
+<span class="normal">762</span>
+<span class="normal">763</span>
+<span class="normal">764</span>
+<span class="normal">765</span>
+<span class="normal">766</span>
+<span class="normal">767</span>
+<span class="normal">768</span>
+<span class="normal">769</span>
+<span class="normal">770</span>
+<span class="normal">771</span>
+<span class="normal">772</span>
+<span class="normal">773</span>
+<span class="normal">774</span>
+<span class="normal">775</span>
+<span class="normal">776</span>
+<span class="normal">777</span>
+<span class="normal">778</span>
+<span class="normal">779</span>
+<span class="normal">780</span>
+<span class="normal">781</span>
+<span class="normal">782</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">wildboottest</span><span class="p">(</span><span class="n">model</span> <span class="p">:</span> <span class="s1">&#39;OLS&#39;</span><span class="p">,</span> 
                  <span class="n">B</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span> 
+                 <span class="n">cluster</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
                  <span class="n">param</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
                  <span class="n">weights_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;rademacher&#39;</span><span class="p">,</span>
                  <span class="n">impose_null</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> 
@@ -740,8 +749,9 @@
 
 <span class="sd">  Args:</span>
 <span class="sd">      model (OLS):  A statsmodels regression object</span>
-<span class="sd">      cluster (Union[np.ndarray, pd.Series, pd.DataFrame]): A numpy array of dimension one, containing the clustering variable.</span>
 <span class="sd">      B (int): The number of bootstrap iterations to run</span>
+<span class="sd">           cluster (Union[None, np.ndarray, pd.Series, pd.DataFrame], optional): If None (default), a &#39;heteroskedastic&#39; wild boostrap </span>
+<span class="sd">           is run. For a wild cluster bootstrap, requires a numpy array of dimension one,a  pandas Series or DataFrame, containing the clustering variable.</span>
 <span class="sd">      param (Union[str, None], optional): A string of length one, containing the test parameter of interest. Defaults to None.</span>
 <span class="sd">      weights_type (str, optional): The type of bootstrap weights. Either &#39;rademacher&#39;, &#39;mammen&#39;, &#39;webb&#39; or &#39;normal&#39;. </span>
 <span class="sd">                        &#39;rademacher&#39; by default. Defaults to &#39;rademacher&#39;.</span>
@@ -777,6 +787,7 @@
 <span class="sd">      &gt;&gt;&gt; Y = 1 + X @ beta + u</span>
 <span class="sd">      &gt;&gt;&gt; cluster = np.random.choice(list(range(0,G)), N)</span>
 <span class="sd">      &gt;&gt;&gt; model = sm.OLS(Y, X)</span>
+<span class="sd">      &gt;&gt;&gt; wildboottest(model, param = &quot;X1&quot;, B = 9999)</span>
 <span class="sd">      &gt;&gt;&gt; wildboottest(model, param = &quot;X1&quot;, cluster = cluster, B = 9999)</span>
 <span class="sd">      &gt;&gt;&gt; wildboottest(model, cluster = cluster, B = 9999)</span>
 <span class="sd">  &quot;&quot;&quot;</span>
@@ -794,38 +805,52 @@
   <span class="n">pvalues</span> <span class="o">=</span> <span class="p">[]</span>
   <span class="n">tstats</span> <span class="o">=</span> <span class="p">[]</span>
 
-  <span class="k">def</span> <span class="nf">generate_stats</span><span class="p">(</span><span class="n">param</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">generate_stats</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">cluster</span><span class="p">):</span>
 
-    <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xnames</span><span class="p">))</span>
-    <span class="n">R</span><span class="p">[</span><span class="n">xnames</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">param</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="c1"># Just test for beta=0</span>
+      <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xnames</span><span class="p">))</span>
+      <span class="n">R</span><span class="p">[</span><span class="n">xnames</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">param</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+      <span class="c1"># Just test for beta=0</span>
 
-    <span class="c1"># is it possible to fetch the clustering variables from the pre-processed data </span>
-    <span class="c1"># frame, e.g. with &#39;excluding&#39; observations with missings etc</span>
-    <span class="c1"># cluster = ...</span>
+      <span class="c1"># is it possible to fetch the clustering variables from the pre-processed data </span>
+      <span class="c1"># frame, e.g. with &#39;excluding&#39; observations with missings etc</span>
+      <span class="c1"># cluster = ...</span>
 
-    <span class="n">boot</span> <span class="o">=</span> <span class="n">Wildboottest</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">,</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">cluster</span><span class="p">,</span> 
-                        <span class="n">R</span> <span class="o">=</span> <span class="n">R</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="n">B</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span><span class="p">)</span>
-    <span class="n">boot</span><span class="o">.</span><span class="n">get_scores</span><span class="p">(</span><span class="n">bootstrap_type</span> <span class="o">=</span> <span class="n">bootstrap_type</span><span class="p">,</span> <span class="n">impose_null</span> <span class="o">=</span> <span class="n">impose_null</span><span class="p">,</span> <span class="n">adj</span><span class="o">=</span><span class="n">adj</span><span class="p">,</span> <span class="n">cluster_adj</span><span class="o">=</span><span class="n">cluster_adj</span><span class="p">)</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">full_enumeration_warn</span> <span class="o">=</span> <span class="n">boot</span><span class="o">.</span><span class="n">get_weights</span><span class="p">(</span><span class="n">weights_type</span> <span class="o">=</span> <span class="n">weights_type</span><span class="p">)</span>
-    <span class="n">boot</span><span class="o">.</span><span class="n">get_numer</span><span class="p">()</span>
-    <span class="n">boot</span><span class="o">.</span><span class="n">get_denom</span><span class="p">()</span>
-    <span class="n">boot</span><span class="o">.</span><span class="n">get_tboot</span><span class="p">()</span>
-    <span class="n">boot</span><span class="o">.</span><span class="n">get_vcov</span><span class="p">()</span>
-    <span class="n">boot</span><span class="o">.</span><span class="n">get_tstat</span><span class="p">()</span>
-    <span class="n">boot</span><span class="o">.</span><span class="n">get_pvalue</span><span class="p">(</span><span class="n">pval_type</span> <span class="o">=</span> <span class="s2">&quot;two-tailed&quot;</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">cluster</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> 
 
-    <span class="n">pvalues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">boot</span><span class="o">.</span><span class="n">pvalue</span><span class="p">)</span>
-    <span class="n">tstats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">boot</span><span class="o">.</span><span class="n">t_stat</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+          <span class="n">boot</span> <span class="o">=</span> <span class="n">WildboottestHC</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">R</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="n">B</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span><span class="p">)</span>
+          <span class="n">boot</span><span class="o">.</span><span class="n">get_adjustments</span><span class="p">(</span><span class="n">bootstrap_type</span> <span class="o">=</span> <span class="n">bootstrap_type</span><span class="p">)</span>
+          <span class="n">boot</span><span class="o">.</span><span class="n">get_uhat</span><span class="p">(</span><span class="n">impose_null</span> <span class="o">=</span> <span class="n">impose_null</span><span class="p">)</span>
+          <span class="n">boot</span><span class="o">.</span><span class="n">get_tboot</span><span class="p">(</span><span class="n">weights_type</span> <span class="o">=</span> <span class="n">weights_type</span><span class="p">)</span>
+          <span class="n">boot</span><span class="o">.</span><span class="n">get_tstat</span><span class="p">()</span>
+          <span class="n">boot</span><span class="o">.</span><span class="n">get_pvalue</span><span class="p">(</span><span class="n">pval_type</span> <span class="o">=</span> <span class="s2">&quot;two-tailed&quot;</span><span class="p">)</span>  
+          <span class="n">full_enumeration_warn</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="k">return</span> <span class="n">pvalues</span><span class="p">,</span> <span class="n">tstats</span><span class="p">,</span> <span class="n">full_enumeration_warn</span>
+      <span class="k">else</span><span class="p">:</span> 
+
+          <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Estimate wild cluster bootstrap: &#39;</span><span class="p">)</span>
+
+          <span class="n">boot</span> <span class="o">=</span> <span class="n">WildboottestCL</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">,</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">cluster</span><span class="p">,</span> 
+                              <span class="n">R</span> <span class="o">=</span> <span class="n">R</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="n">B</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span><span class="p">)</span>
+          <span class="n">boot</span><span class="o">.</span><span class="n">get_scores</span><span class="p">(</span><span class="n">bootstrap_type</span> <span class="o">=</span> <span class="n">bootstrap_type</span><span class="p">,</span> <span class="n">impose_null</span> <span class="o">=</span> <span class="n">impose_null</span><span class="p">,</span> <span class="n">adj</span><span class="o">=</span><span class="n">adj</span><span class="p">,</span> <span class="n">cluster_adj</span><span class="o">=</span><span class="n">cluster_adj</span><span class="p">)</span>
+          <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">full_enumeration_warn</span> <span class="o">=</span> <span class="n">boot</span><span class="o">.</span><span class="n">get_weights</span><span class="p">(</span><span class="n">weights_type</span> <span class="o">=</span> <span class="n">weights_type</span><span class="p">)</span>
+          <span class="n">boot</span><span class="o">.</span><span class="n">get_numer</span><span class="p">()</span>
+          <span class="n">boot</span><span class="o">.</span><span class="n">get_denom</span><span class="p">()</span>
+          <span class="n">boot</span><span class="o">.</span><span class="n">get_tboot</span><span class="p">()</span>
+          <span class="n">boot</span><span class="o">.</span><span class="n">get_vcov</span><span class="p">()</span>
+          <span class="n">boot</span><span class="o">.</span><span class="n">get_tstat</span><span class="p">()</span>
+          <span class="n">boot</span><span class="o">.</span><span class="n">get_pvalue</span><span class="p">(</span><span class="n">pval_type</span> <span class="o">=</span> <span class="s2">&quot;two-tailed&quot;</span><span class="p">)</span>
+
+      <span class="n">pvalues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">boot</span><span class="o">.</span><span class="n">pvalue</span><span class="p">)</span>
+      <span class="n">tstats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">boot</span><span class="o">.</span><span class="n">t_stat</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+      <span class="k">return</span> <span class="n">pvalues</span><span class="p">,</span> <span class="n">tstats</span><span class="p">,</span> <span class="n">full_enumeration_warn</span>
 
   <span class="k">if</span> <span class="n">param</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xnames</span><span class="p">:</span>
-      <span class="n">pvalues</span><span class="p">,</span> <span class="n">tstats</span><span class="p">,</span> <span class="n">full_enumeration_warn</span> <span class="o">=</span> <span class="n">generate_stats</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+      <span class="n">pvalues</span><span class="p">,</span> <span class="n">tstats</span><span class="p">,</span> <span class="n">full_enumeration_warn</span> <span class="o">=</span> <span class="n">generate_stats</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">cluster</span><span class="o">=</span><span class="n">cluster</span><span class="p">)</span>
     <span class="n">param</span> <span class="o">=</span> <span class="n">xnames</span>
   <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="n">pvalues</span><span class="p">,</span> <span class="n">tstats</span><span class="p">,</span> <span class="n">full_enumeration_warn</span> <span class="o">=</span> <span class="n">generate_stats</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
+    <span class="n">pvalues</span><span class="p">,</span> <span class="n">tstats</span><span class="p">,</span> <span class="n">full_enumeration_warn</span> <span class="o">=</span> <span class="n">generate_stats</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">cluster</span><span class="o">=</span><span class="n">cluster</span><span class="p">)</span>
   <span class="k">else</span><span class="p">:</span>
     <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;`param` not correctly specified&quot;</span><span class="p">)</span>
 

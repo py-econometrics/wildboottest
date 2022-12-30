@@ -595,18 +595,14 @@
 <span class="normal">82</span>
 <span class="normal">83</span>
 <span class="normal">84</span>
-<span class="normal">85</span>
-<span class="normal">86</span>
-<span class="normal">87</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">draw_weights</span><span class="p">(</span><span class="n">t</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">],</span> <span class="n">full_enumeration</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">N_G_bootcluster</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">boot_iter</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="normal">85</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">draw_weights</span><span class="p">(</span><span class="n">t</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">],</span> <span class="n">full_enumeration</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">N_G_bootcluster</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">boot_iter</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;draw bootstrap weights</span>
-
 <span class="sd">    Args:</span>
 <span class="sd">        t (str|callable): the type of the weights distribution. Either &#39;rademacher&#39;, &#39;mammen&#39;, &#39;norm&#39; or &#39;webb&#39;</span>
 <span class="sd">        If `t` is a callable, must be a function of one variable, `n`, and return a vector of size `n`</span>
 <span class="sd">        full_enumeration (bool): should deterministic full enumeration be employed</span>
 <span class="sd">        N_G_bootcluster (int): the number of bootstrap clusters</span>
 <span class="sd">        boot_iter (int): the number of bootstrap iterations</span>
-
 <span class="sd">    Returns:</span>
 <span class="sd">        Tuple[np.ndarray, int]: a matrix of dimension N_G_bootcluster x (boot_iter + 1) and the number of iterations</span>
 <span class="sd">    &quot;&quot;&quot;</span>    
@@ -641,9 +637,9 @@
 
     <span class="c1"># update boot_iter (B) - only relevant in enumeration case</span>
     <span class="n">boot_iter</span> <span class="o">=</span> <span class="n">v0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> 
-    <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">v0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span><span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1">#v = np.insert(v0, 0, 1,axis = 1)</span>
 
-    <span class="k">return</span> <span class="n">v</span><span class="p">,</span> <span class="n">boot_iter</span>
+    <span class="k">return</span> <span class="n">v0</span><span class="p">,</span> <span class="n">boot_iter</span>
 </code></pre></div></td></tr></table></div>
       </details>
   </div>
