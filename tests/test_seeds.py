@@ -1,6 +1,8 @@
 import pytest
 from wildboottest.wildboottest import wildboottest, WildboottestCL
 import statsmodels.api as sm
+import numpy as np
+import pandas as pd
 
 
 def data(G):
