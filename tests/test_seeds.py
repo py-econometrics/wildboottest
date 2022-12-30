@@ -1,5 +1,5 @@
 import pytest
-from wildboottest.wildboottest import wildboottest, WildboottestCL
+from wildboottest.wildboottest import wildboottest
 import statsmodels.api as sm
 import numpy as np
 import pandas as pd
@@ -27,7 +27,7 @@ def data(G):
   return df, B
 
 
-def test_seeds():
+def test_seeds_CL():
 
     df, B = data(50)
     N = df.shape[0]
@@ -54,6 +54,39 @@ def test_seeds():
 
     run1 = wildboottest(model, param = "X1", cluster = df.cluster, B= 999)
     run2 = wildboottest(model, param = "X1", cluster = df.cluster, B= 999)
+
+    assert run1.iloc[0][0] == run2.iloc[0][0]
+    assert run1.iloc[0][1] != run2.iloc[0][1]
+
+
+def test_seeds_HC():
+
+    df, B = data(50)
+    df = df[0:200]
+    N = df.shape[0]
+    X = df[['intercept', 'X1', 'X2']]
+    Y = df['Y']
+    R = np.array([0,1,0])
+
+    model = sm.OLS(Y, X)
+    
+    # for CL
+    run1 = wildboottest(model, param = "X1", B= 999, seed = 12)
+    run2 = wildboottest(model, param = "X1", B= 999, seed = 12)
+  
+    assert run1.iloc[0][0] == run2.iloc[0][0]
+    assert run1.iloc[0][1] == run2.iloc[0][1]
+    
+    np.random.seed(123)
+    run1 = wildboottest(model, param = "X1", B= 9999)
+    np.random.seed(123)
+    run2 = wildboottest(model, param = "X1", B= 9999)
+
+    assert run1.iloc[0][0] == run2.iloc[0][0]
+    assert run1.iloc[0][1] == run2.iloc[0][1]
+
+    run1 = wildboottest(model, param = "X1", B= 999)
+    run2 = wildboottest(model, param = "X1", B= 999)
 
     assert run1.iloc[0][0] == run2.iloc[0][0]
     assert run1.iloc[0][1] != run2.iloc[0][1]
