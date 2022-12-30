@@ -734,8 +734,7 @@
 <span class="normal">779</span>
 <span class="normal">780</span>
 <span class="normal">781</span>
-<span class="normal">782</span>
-<span class="normal">783</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">wildboottest</span><span class="p">(</span><span class="n">model</span> <span class="p">:</span> <span class="s1">&#39;OLS&#39;</span><span class="p">,</span> 
+<span class="normal">782</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">wildboottest</span><span class="p">(</span><span class="n">model</span> <span class="p">:</span> <span class="s1">&#39;OLS&#39;</span><span class="p">,</span> 
                  <span class="n">B</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span> 
                  <span class="n">cluster</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
                  <span class="n">param</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
@@ -818,7 +817,6 @@
 
       <span class="k">if</span> <span class="n">cluster</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> 
 
-          <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Run non-clustered bootstrap.&#39;</span><span class="p">)</span>
           <span class="n">boot</span> <span class="o">=</span> <span class="n">WildboottestHC</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">R</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="n">B</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span><span class="p">)</span>
           <span class="n">boot</span><span class="o">.</span><span class="n">get_adjustments</span><span class="p">(</span><span class="n">bootstrap_type</span> <span class="o">=</span> <span class="n">bootstrap_type</span><span class="p">)</span>
           <span class="n">boot</span><span class="o">.</span><span class="n">get_uhat</span><span class="p">(</span><span class="n">impose_null</span> <span class="o">=</span> <span class="n">impose_null</span><span class="p">)</span>
@@ -829,7 +827,7 @@
 
       <span class="k">else</span><span class="p">:</span> 
 
-          <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Run wild cluster bootstrap: &#39;</span><span class="p">)</span>
+          <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Estimate wild cluster bootstrap: &#39;</span><span class="p">)</span>
 
           <span class="n">boot</span> <span class="o">=</span> <span class="n">WildboottestCL</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">,</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">cluster</span><span class="p">,</span> 
                               <span class="n">R</span> <span class="o">=</span> <span class="n">R</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="n">B</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span><span class="p">)</span>
