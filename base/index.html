@@ -64,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#wildboottest.wildboottest.WildboottestCL" class="md-skip">
+        <a href="#wild-cluster-bootstrap-class" class="md-skip">
           Skip to content
         </a>
       
@@ -317,22 +317,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#wild-cluster-bootstrap-class" class="md-nav__link">
+    Wild Cluster Bootstrap Class
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#wildboottest.wildboottest.WildboottestCL" class="md-nav__link">
     wildboottest.wildboottest.WildboottestCL
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#wildboottest.wildboottest.WildboottestCL--preliminaries-load-libraries-and-create-data" class="md-nav__link">
-    preliminaries: load libraries and create data
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#wildboottest.wildboottest.WildboottestCL--run-the-wild-cluster-bootstrap" class="md-nav__link">
-    run the wild cluster bootstrap
   </a>
   
 </li>
@@ -359,15 +352,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#wildboottest.wildboottest.WildboottestHC" class="md-nav__link">
-    wildboottest.wildboottest.WildboottestHC
+  <a href="#wild-non-clustered-bootstrap-class" class="md-nav__link">
+    Wild (non-clustered) Bootstrap Class
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#wildboottest.wildboottest.WildboottestHC--run-the-wild-bootstrap" class="md-nav__link">
-    run the wild bootstrap
+  <a href="#wildboottest.wildboottest.WildboottestHC" class="md-nav__link">
+    wildboottest.wildboottest.WildboottestHC
   </a>
   
 </li>
@@ -456,22 +449,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#wild-cluster-bootstrap-class" class="md-nav__link">
+    Wild Cluster Bootstrap Class
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#wildboottest.wildboottest.WildboottestCL" class="md-nav__link">
     wildboottest.wildboottest.WildboottestCL
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#wildboottest.wildboottest.WildboottestCL--preliminaries-load-libraries-and-create-data" class="md-nav__link">
-    preliminaries: load libraries and create data
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#wildboottest.wildboottest.WildboottestCL--run-the-wild-cluster-bootstrap" class="md-nav__link">
-    run the wild cluster bootstrap
   </a>
   
 </li>
@@ -498,15 +484,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#wildboottest.wildboottest.WildboottestHC" class="md-nav__link">
-    wildboottest.wildboottest.WildboottestHC
+  <a href="#wild-non-clustered-bootstrap-class" class="md-nav__link">
+    Wild (non-clustered) Bootstrap Class
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#wildboottest.wildboottest.WildboottestHC--run-the-wild-bootstrap" class="md-nav__link">
-    run the wild bootstrap
+  <a href="#wildboottest.wildboottest.WildboottestHC" class="md-nav__link">
+    wildboottest.wildboottest.WildboottestHC
   </a>
   
 </li>
@@ -554,6 +540,9 @@
 
   <h1>WildBoottest</h1>
 
+<h2 id="wild-cluster-bootstrap-class">Wild Cluster Bootstrap Class</h2>
+
+
 <div class="doc doc-object doc-class">
 
 
@@ -569,7 +558,6 @@ methods in the following way: </p>
   <blockquote>
 <blockquote>
 <blockquote>
-<h2 id="wildboottest.wildboottest.WildboottestCL--preliminaries-load-libraries-and-create-data">preliminaries: load libraries and create data</h2>
 <p>import numpy as np
 from wildboottest.wildboottest import WildboottestCL
 np.random.seed(12312312)
@@ -584,7 +572,6 @@ Y = 1 + X @ beta + u
 cluster = np.random.choice(list(range(0,G)), N)
 R = np.array([1, 0, 0])
 B = 999</p>
-<h2 id="wildboottest.wildboottest.WildboottestCL--run-the-wild-cluster-bootstrap">run the wild cluster bootstrap</h2>
 <p>wb = WildboottestCL(X = X, Y = Y, cluster = cluster, R = R, B = B)
 wb.get_scores(bootstrap_type = "11", impose_null = True)
 wb.get_weights(weights_type= "rademacher")
@@ -601,7 +588,9 @@ wb.get_pvalue()</p>
 
         <details class="quote">
           <summary>Source code in <code>wildboottest\wildboottest.py</code></summary>
-          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">247</span>
+          <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
 <span class="normal">248</span>
 <span class="normal">249</span>
 <span class="normal">250</span>
@@ -994,19 +983,12 @@ wb.get_pvalue()</p>
 <span class="normal">637</span>
 <span class="normal">638</span>
 <span class="normal">639</span>
-<span class="normal">640</span>
-<span class="normal">641</span>
-<span class="normal">642</span>
-<span class="normal">643</span>
-<span class="normal">644</span>
-<span class="normal">645</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">WildboottestCL</span><span class="p">:</span> 
-  <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">  Create an object of WildboottestCL and get p-value by successively applying</span>
+<span class="normal">640</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">WildboottestCL</span><span class="p">:</span> 
+  <span class="sd">&quot;&quot;&quot;Create an object of WildboottestCL and get p-value by successively applying</span>
 <span class="sd">  methods in the following way: </span>
 
 <span class="sd">  Example:</span>
 
-<span class="sd">      &gt;&gt;&gt; # preliminaries: load libraries and create data</span>
 <span class="sd">      &gt;&gt;&gt; import numpy as np</span>
 <span class="sd">      &gt;&gt;&gt; from wildboottest.wildboottest import WildboottestCL</span>
 <span class="sd">      &gt;&gt;&gt; np.random.seed(12312312)</span>
@@ -1022,7 +1004,6 @@ wb.get_pvalue()</p>
 <span class="sd">      &gt;&gt;&gt; R = np.array([1, 0, 0])</span>
 <span class="sd">      &gt;&gt;&gt; B = 999</span>
 
-<span class="sd">      &gt;&gt;&gt; # run the wild cluster bootstrap</span>
 <span class="sd">      &gt;&gt;&gt; wb = WildboottestCL(X = X, Y = Y, cluster = cluster, R = R, B = B)</span>
 <span class="sd">      &gt;&gt;&gt; wb.get_scores(bootstrap_type = &quot;11&quot;, impose_null = True)</span>
 <span class="sd">      &gt;&gt;&gt; wb.get_weights(weights_type= &quot;rademacher&quot;)</span>
@@ -1537,7 +1518,12 @@ wb.get_pvalue()</p>
 
       <details class="quote">
         <summary>Source code in <code>wildboottest\wildboottest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">282</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
 <span class="normal">283</span>
 <span class="normal">284</span>
 <span class="normal">285</span>
@@ -1632,12 +1618,7 @@ wb.get_pvalue()</p>
 <span class="normal">374</span>
 <span class="normal">375</span>
 <span class="normal">376</span>
-<span class="normal">377</span>
-<span class="normal">378</span>
-<span class="normal">379</span>
-<span class="normal">380</span>
-<span class="normal">381</span>
-<span class="normal">382</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span> 
+<span class="normal">377</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span> 
              <span class="n">Y</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span> 
              <span class="n">cluster</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span> 
              <span class="n">R</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> 
@@ -1832,7 +1813,12 @@ wb.get_pvalue()</p>
 
       <details class="quote">
         <summary>Source code in <code>wildboottest\wildboottest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">411</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
 <span class="normal">412</span>
 <span class="normal">413</span>
 <span class="normal">414</span>
@@ -1930,12 +1916,7 @@ wb.get_pvalue()</p>
 <span class="normal">506</span>
 <span class="normal">507</span>
 <span class="normal">508</span>
-<span class="normal">509</span>
-<span class="normal">510</span>
-<span class="normal">511</span>
-<span class="normal">512</span>
-<span class="normal">513</span>
-<span class="normal">514</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bootstrap_type</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+<span class="normal">509</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bootstrap_type</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
                <span class="n">impose_null</span> <span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">adj</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> 
                <span class="n">cluster_adj</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
   <span class="sd">&quot;&quot;&quot;Run bootstrap and get scores for each variable</span>
@@ -2103,7 +2084,12 @@ wb.get_pvalue()</p>
 
       <details class="quote">
         <summary>Source code in <code>wildboottest\wildboottest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">384</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
 <span class="normal">385</span>
 <span class="normal">386</span>
 <span class="normal">387</span>
@@ -2123,12 +2109,7 @@ wb.get_pvalue()</p>
 <span class="normal">401</span>
 <span class="normal">402</span>
 <span class="normal">403</span>
-<span class="normal">404</span>
-<span class="normal">405</span>
-<span class="normal">406</span>
-<span class="normal">407</span>
-<span class="normal">408</span>
-<span class="normal">409</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weights_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="normal">404</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weights_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
   <span class="sd">&quot;&quot;&quot;Function for getting weights for bootstrapping.</span>
 
 <span class="sd">  Args:</span>
@@ -2166,7 +2147,8 @@ wb.get_pvalue()</p>
 
   </div>
 
-</div>
+</div><h2 id="wild-non-clustered-bootstrap-class">Wild (non-clustered) Bootstrap Class</h2>
+
 
 <div class="doc doc-object doc-class">
 
@@ -2196,7 +2178,6 @@ u = np.random.normal(0,1,N)
 Y = 1 + X @ beta + u
 R = np.array([1, 0, 0])
 B = 999</p>
-<h2 id="wildboottest.wildboottest.WildboottestHC--run-the-wild-bootstrap">run the wild bootstrap</h2>
 <p>wb = WildboottestHC(X = X, Y = Y, R = R, B = B)
 wb.get_adjustments(bootstrap_type = '11')
 wb.get_uhat(impose_null = True)
@@ -2405,12 +2386,9 @@ wb.get_pvalue()</p>
 <span class="normal">216</span>
 <span class="normal">217</span>
 <span class="normal">218</span>
-<span class="normal">219</span>
-<span class="normal">220</span>
-<span class="normal">221</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">WildboottestHC</span><span class="p">:</span> 
+<span class="normal">219</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">WildboottestHC</span><span class="p">:</span> 
 
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Create an object of WildboottestHC and get p-value by successively applying</span>
+    <span class="sd">&quot;&quot;&quot;Create an object of WildboottestHC and get p-value by successively applying</span>
 <span class="sd">    methods in the following way: </span>
 
 <span class="sd">    Example:</span>
@@ -2429,7 +2407,6 @@ wb.get_pvalue()</p>
 <span class="sd">      &gt;&gt;&gt; R = np.array([1, 0, 0])</span>
 <span class="sd">      &gt;&gt;&gt; B = 999</span>
 
-<span class="sd">      &gt;&gt;&gt; # run the wild bootstrap</span>
 <span class="sd">      &gt;&gt;&gt; wb = WildboottestHC(X = X, Y = Y, R = R, B = B)</span>
 <span class="sd">      &gt;&gt;&gt; wb.get_adjustments(bootstrap_type = &#39;11&#39;)</span>
 <span class="sd">      &gt;&gt;&gt; wb.get_uhat(impose_null = True)</span>
@@ -2724,7 +2701,9 @@ wb.get_pvalue()</p>
 
       <details class="quote">
         <summary>Source code in <code>wildboottest\wildboottest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">55</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
 <span class="normal">56</span>
 <span class="normal">57</span>
 <span class="normal">58</span>
@@ -2765,9 +2744,7 @@ wb.get_pvalue()</p>
 <span class="normal">93</span>
 <span class="normal">94</span>
 <span class="normal">95</span>
-<span class="normal">96</span>
-<span class="normal">97</span>
-<span class="normal">98</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span> 
+<span class="normal">96</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span> 
       <span class="n">Y</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span> 
       <span class="n">R</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> 
       <span class="n">B</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> 
@@ -2834,7 +2811,9 @@ wb.get_pvalue()</p>
 
       <details class="quote">
         <summary>Source code in <code>wildboottest\wildboottest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">100</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
 <span class="normal">101</span>
 <span class="normal">102</span>
 <span class="normal">103</span>
@@ -2847,9 +2826,7 @@ wb.get_pvalue()</p>
 <span class="normal">110</span>
 <span class="normal">111</span>
 <span class="normal">112</span>
-<span class="normal">113</span>
-<span class="normal">114</span>
-<span class="normal">115</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_adjustments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bootstrap_type</span><span class="p">):</span>
+<span class="normal">113</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_adjustments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bootstrap_type</span><span class="p">):</span>
 
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Raises: </span>
@@ -2888,7 +2865,9 @@ wb.get_pvalue()</p>
 
       <details class="quote">
         <summary>Source code in <code>wildboottest\wildboottest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">117</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
 <span class="normal">118</span>
 <span class="normal">119</span>
 <span class="normal">120</span>
@@ -2911,9 +2890,7 @@ wb.get_pvalue()</p>
 <span class="normal">137</span>
 <span class="normal">138</span>
 <span class="normal">139</span>
-<span class="normal">140</span>
-<span class="normal">141</span>
-<span class="normal">142</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_uhat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">impose_null</span> <span class="p">:</span> <span class="nb">bool</span><span class="p">):</span> 
+<span class="normal">140</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_uhat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">impose_null</span> <span class="p">:</span> <span class="nb">bool</span><span class="p">):</span> 
 
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Raises: </span>

@@ -470,11 +470,20 @@
           <td>
                 <code>int</code>
           </td>
-          <td><p>The number of bootstrap iterations to run
- cluster (Union[None, np.ndarray, pd.Series, pd.DataFrame], optional): If None (default), a 'heteroskedastic' wild boostrap 
- is run. For a wild cluster bootstrap, requires a numpy array of dimension one,a  pandas Series or DataFrame, containing the clustering variable.</p></td>
+          <td><p>The number of bootstrap iterations to run</p></td>
           <td>
               <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>cluster</code></td>
+          <td>
+                <code><span title="typing.Union">Union</span>[None, <span title="numpy">np</span>.<span title="numpy.ndarray">ndarray</span>, <span title="pandas">pd</span>.<span title="pandas.Series">Series</span>, <span title="pandas">pd</span>.<span title="pandas.DataFrame">DataFrame</span>]</code>
+          </td>
+          <td><p>If None (default), a 'heteroskedastic' wild boostrap 
+ is run. For a wild cluster bootstrap, requires a numpy array of dimension one,a  pandas Series or DataFrame, containing the clustering variable.</p></td>
+          <td>
+                <code>None</code>
           </td>
         </tr>
         <tr>
@@ -600,7 +609,12 @@
 
       <details class="quote">
         <summary>Source code in <code>wildboottest\wildboottest.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">648</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">643</span>
+<span class="normal">644</span>
+<span class="normal">645</span>
+<span class="normal">646</span>
+<span class="normal">647</span>
+<span class="normal">648</span>
 <span class="normal">649</span>
 <span class="normal">650</span>
 <span class="normal">651</span>
@@ -727,14 +741,7 @@
 <span class="normal">772</span>
 <span class="normal">773</span>
 <span class="normal">774</span>
-<span class="normal">775</span>
-<span class="normal">776</span>
-<span class="normal">777</span>
-<span class="normal">778</span>
-<span class="normal">779</span>
-<span class="normal">780</span>
-<span class="normal">781</span>
-<span class="normal">782</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">wildboottest</span><span class="p">(</span><span class="n">model</span> <span class="p">:</span> <span class="s1">&#39;OLS&#39;</span><span class="p">,</span> 
+<span class="normal">775</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">wildboottest</span><span class="p">(</span><span class="n">model</span> <span class="p">:</span> <span class="s1">&#39;OLS&#39;</span><span class="p">,</span> 
                  <span class="n">B</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span> 
                  <span class="n">cluster</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
                  <span class="n">param</span> <span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
@@ -750,7 +757,7 @@
 <span class="sd">  Args:</span>
 <span class="sd">      model (OLS):  A statsmodels regression object</span>
 <span class="sd">      B (int): The number of bootstrap iterations to run</span>
-<span class="sd">           cluster (Union[None, np.ndarray, pd.Series, pd.DataFrame], optional): If None (default), a &#39;heteroskedastic&#39; wild boostrap </span>
+<span class="sd">      cluster (Union[None, np.ndarray, pd.Series, pd.DataFrame], optional): If None (default), a &#39;heteroskedastic&#39; wild boostrap </span>
 <span class="sd">           is run. For a wild cluster bootstrap, requires a numpy array of dimension one,a  pandas Series or DataFrame, containing the clustering variable.</span>
 <span class="sd">      param (Union[str, None], optional): A string of length one, containing the test parameter of interest. Defaults to None.</span>
 <span class="sd">      weights_type (str, optional): The type of bootstrap weights. Either &#39;rademacher&#39;, &#39;mammen&#39;, &#39;webb&#39; or &#39;normal&#39;. </span>
@@ -826,8 +833,6 @@
           <span class="n">full_enumeration_warn</span> <span class="o">=</span> <span class="kc">False</span>
 
       <span class="k">else</span><span class="p">:</span> 
-
-          <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Estimate wild cluster bootstrap: &#39;</span><span class="p">)</span>
 
           <span class="n">boot</span> <span class="o">=</span> <span class="n">WildboottestCL</span><span class="p">(</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">,</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">cluster</span><span class="p">,</span> 
                               <span class="n">R</span> <span class="o">=</span> <span class="n">R</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="n">B</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span><span class="p">)</span>
