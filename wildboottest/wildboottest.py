@@ -20,7 +20,7 @@ class TestHCImposeNullException(Exception):
 
 class TestHCWeightsException(Exception):
   pass
-
+  
 class WildboottestHC: 
 
     """Create an object of WildboottestHC and get p-value by successively applying
@@ -84,8 +84,8 @@ class WildboottestHC:
         else:
           self.Y = Y
 
-        if isinstance(seed, int):
-          np.random.seed(seed)
+        if seed is not None:
+          self.rng = np.random.default_rng(seed=seed)
 
         self.N = X.shape[0]
         self.k = X.shape[1]
@@ -172,11 +172,11 @@ class WildboottestHC:
                 v = np.zeros(N)
                 if weights_type == 'rademacher':
                     for i in range(0, N):
-                        v[i] = np.random.choice(np.array([-1,1]))
+                        v[i] = self.rng.choice(np.array([-1,1]))
                 else:
                     v = np.zeros(N)
                     for i in range(0, N):
-                        v[i] = np.random.normal() 
+                        v[i] = self.rng.normal() 
 
                 uhat_boot = uhat2 * v
                 yhat_boot = yhat + uhat_boot
@@ -240,7 +240,6 @@ def _adjust_scores(X, tXXinv, variant):
         resid_multiplier = 1 / (1-diag_hatmat)
 
     return resid_multiplier, small_sample_correction
-
 
 class WildboottestCL: 
   """Create an object of WildboottestCL and get p-value by successively applying
@@ -329,8 +328,8 @@ class WildboottestCL:
       self.bootclustid = np.unique(bootcluster)
       self.bootcluster = bootcluster
       
-    if isinstance(seed, int):
-      np.random.seed(seed)
+    if seed is not None:
+      self.rng = np.random.default_rng(seed=seed)
 
     self.N_G_bootcluster = len(self.bootclustid)
     self.G  = len(self.clustid)
@@ -398,7 +397,8 @@ class WildboottestCL:
       t = self.weights_type, 
       full_enumeration = self.full_enumeration, 
       N_G_bootcluster = self.N_G_bootcluster,
-      boot_iter = self.B
+      boot_iter = self.B,
+      rng=self.rng
     )  
     
     return self.v, self.B, full_enumeration_warn
