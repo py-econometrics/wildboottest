@@ -84,10 +84,8 @@ class WildboottestHC:
         else:
           self.Y = Y
 
-        if seed is None: 
-          seed = np.random.random_integers(low = 1, high = 2e09, size = 1)
-
-        self.rng = np.random.default_rng(seed = seed)
+        if seed is not None: 
+          np.random.seed(seed)
 
         self.N = X.shape[0]
         self.k = X.shape[1]
