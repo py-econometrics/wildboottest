@@ -41,36 +41,6 @@ def data(G):
   return df, B
 
 
-def hc_vs_cluster_bootstrap(): 
-
-  '''
-  compare results from HC vs cluster bootstrap
-  '''
-
-  def reldiff(x, y): 
-      1 - x / y 
-
-  df, B = data(5)
-  N = df.shape[0]
-  cluster = pd.Series(range(0, N))
-  X = df[['intercept', 'X1', 'X2']]
-  Y = df['Y']
-  R = np.array([0,1,0])
-
-  fit = sm.OLS(Y, X)
-  # all allowed types
-  cl = wildboottest(fit, param = "X1", cluster = cluster, bootstrap_type='11')
-
-  types = ['11', '22', '33']
-
-  for type in types: 
-
-      hc = wildboottest(fit, param = "X1", bootstrap_type=type)
-
-      assert reldiff(hc.xs('X1')[0], cl.xs('X1')[0])
-      assert reldiff(hc.xs('X1')[1], cl.xs('X1')[1])
-
-
 def test_r_vs_py_deterministic():
   
   '''
@@ -232,26 +202,26 @@ def test_r_vs_py_stochastic():
             # test condition ... 
             fwildclusterboot_boot_pvals.append(list(r_t_boot.rx2("p_val")))
       
-  df = pd.DataFrame(np.transpose(np.array(boot_pvals)), columns=['p_val'],
-                    index=pd.MultiIndex.from_product([
-                      ['11', '31', '13', '33'],
-                      [True, False],
-                      ['rademacher','mammen', 'webb','norm'],
-                      ['two-tailed', 'equal-tailed', '>', '<']
-                    ]))
-  
-  # r_df = pd.read_csv("data/test_df_fwc_res.csv")[['WCR11', "WCR31", "WCU11", "WCU31"]]
-  r_df = pd.DataFrame(np.array(fwildclusterboot_boot_pvals), columns=['p_val'],
+    df = pd.DataFrame(np.transpose(np.array(boot_pvals)), columns=['p_val'],
                       index=pd.MultiIndex.from_product([
-                      ['11', '31', '31', '33'],
-                      [True, False],
-                      ['rademacher','mammen', 'webb','norm'],
-                      ['two-tailed', 'equal-tailed', '>', '<']
-                    ]))
-  print(df.to_markdown())
-  print(r_df.to_markdown())
-  
-  assert all(np.isclose(df.values, r_df.values, rtol=1e-2, atol=1e-2))
+                        ['11', '31', '13', '33'],
+                        [True, False],
+                        ['rademacher','mammen', 'webb','norm'],
+                        ['two-tailed', 'equal-tailed', '>', '<']
+                      ]))
+    
+    # r_df = pd.read_csv("data/test_df_fwc_res.csv")[['WCR11', "WCR31", "WCU11", "WCU31"]]
+    r_df = pd.DataFrame(np.array(fwildclusterboot_boot_pvals), columns=['p_val'],
+                        index=pd.MultiIndex.from_product([
+                        ['11', '31', '31', '33'],
+                        [True, False],
+                        ['rademacher','mammen', 'webb','norm'],
+                        ['two-tailed', 'equal-tailed', '>', '<']
+                      ]))
+    print(df.to_markdown())
+    print(r_df.to_markdown())
+    
+    assert all(np.isclose(df.values, r_df.values, rtol=1e-2, atol=1e-2))
 
 def test_error_warnings():
   '''
