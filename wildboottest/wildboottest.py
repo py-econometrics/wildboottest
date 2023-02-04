@@ -157,7 +157,7 @@ class WildboottestHC:
 
         yhat = (self.X @ beta).flatten()
 
-        R = self.R.reshape((self.k, 1))
+        R = self.R.reshape((self.k, 1)).astype("float")
         self.RXXinvX_2 = np.power(np.transpose(R) @ self.tXXinv @ np.transpose(self.X), 2)
         #RXXinv_2 = np.power(np.transpose(R) @ self.tXXinv, 2)
 
