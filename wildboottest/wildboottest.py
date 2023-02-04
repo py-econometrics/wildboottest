@@ -141,7 +141,7 @@ class WildboottestHC:
 
     def get_tboot(self, weights_type: Union[str, Callable]):
 
-        if weights_type not in ['rademacher', 'normal']:
+        if weights_type not in ['rademacher', 'norm']:
             raise TestHCWeightsException("For the heteroskedastic bootstrap, only weight tyes 'rademacher' and 'normal' are supported, but you provided '" + weights_type + "' .")
         self.weights_type = weights_type
           
