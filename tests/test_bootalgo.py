@@ -183,43 +183,58 @@ def test_r_vs_py_stochastic():
 
   boot_pvals = []
   fwildclusterboot_boot_pvals = []
+  # cluster for wcb tests, None for heteroskedastic tests
+  cluster_vals = [cluster, None]
+  
+  for x in cluster_vals: 
+    for bootstrap_type in ['11', '31', '13', '33']: 
+      for impose_null in [True, False]:
+        for weights_type in ['rademacher','mammen', 'webb','norm']:
+          for pval_type in ['two-tailed', 'equal-tailed', '>', '<']:
+            
+            # python implementation
+            boot = WildboottestCL(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
+            boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null)
+            boot.get_weights(weights_type = weights_type)
+            boot.get_numer()
+            boot.get_denom()
+            boot.get_tboot()
+            boot.get_vcov()
+            boot.get_tstat()
+            boot.get_pvalue(pval_type = pval_type)
+            boot_pvals.append(boot.pvalue)
+            
+            if cluster is not None: 
+              # R implementation
+              r_t_boot = fwildclusterboot.boottest(
+                r_model,
+                param = "X1",
+                clustid = ro.Formula("~cluster"),
+                B=99999,
+                bootstrap_type=bootstrap_type,
+                impose_null=impose_null,
+                p_val_type = pval_type, 
+                type = weights_type,
+                ssc=fwildclusterboot.boot_ssc(adj=False, cluster_adj=False)
+              )
+            else: 
+              r_t_boot = fwildclusterboot.boottest(
+                r_model,
+                param = "X1",
+                B=99999,
+                bootstrap_type=bootstrap_type,
+                impose_null=impose_null,
+                p_val_type = pval_type, 
+                type = weights_type,
+                ssc=fwildclusterboot.boot_ssc(adj=False, cluster_adj=False)
+              )
 
-  for bootstrap_type in ['11', '31', '13', '33']: 
-    for impose_null in [True, False]:
-      for weights_type in ['rademacher','mammen', 'webb','norm']:
-        for pval_type in ['two-tailed', 'equal-tailed', '>', '<']:
-          
-          # python implementation
-          boot = WildboottestCL(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
-          boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null)
-          boot.get_weights(weights_type = weights_type)
-          boot.get_numer()
-          boot.get_denom()
-          boot.get_tboot()
-          boot.get_vcov()
-          boot.get_tstat()
-          boot.get_pvalue(pval_type = pval_type)
-          boot_pvals.append(boot.pvalue)
-          
-          # R implementation
-          r_t_boot = fwildclusterboot.boottest(
-            r_model,
-            param = "X1",
-            clustid = ro.Formula("~cluster"),
-            B=99999,
-            bootstrap_type=bootstrap_type,
-            impose_null=impose_null,
-            p_val_type = pval_type, 
-            type = weights_type,
-            ssc=fwildclusterboot.boot_ssc(adj=False, cluster_adj=False)
-          )
-
-          # test condition ... 
-          fwildclusterboot_boot_pvals.append(list(r_t_boot.rx2("p_val")))
+            # test condition ... 
+            fwildclusterboot_boot_pvals.append(list(r_t_boot.rx2("p_val")))
       
   df = pd.DataFrame(np.transpose(np.array(boot_pvals)), columns=['p_val'],
                     index=pd.MultiIndex.from_product([
-                      ['11', '31', '31', '33'],
+                      ['11', '31', '13', '33'],
                       [True, False],
                       ['rademacher','mammen', 'webb','norm'],
                       ['two-tailed', 'equal-tailed', '>', '<']
