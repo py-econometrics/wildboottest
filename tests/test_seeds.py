@@ -39,15 +39,16 @@ def test_results_from_same_seed():
         pd.testing.assert_frame_equal(a,b)
 
         # random seed set outside of function and in function produce equal results
-        np.random.default_rng(123)
+        # I suppose this will never work?
+        np.random.seed(123)
         a1 = wildboottest(model, param = "X1", cluster = x, B= 999)
         b1 = wildboottest(model, param = "X1", cluster = x, B= 999, seed=123)
         pd.testing.assert_frame_equal(a1,b1)
         
         # random seed outside of function 2x -> same results
-        np.random.default_rng(123)
+        np.random.seed(123)
         a2 = wildboottest(model, param = "X1", cluster = x, B= 999)
-        np.random.default_rng(123)
+        np.random.seed(123)
         b2 = wildboottest(model, param = "X1", cluster = x, B= 999)
         pd.testing.assert_frame_equal(a2,b2)
 
