@@ -84,8 +84,10 @@ class WildboottestHC:
         else:
           self.Y = Y
 
-        if seed is not None:
-          self.rng = np.random.default_rng(seed=seed)
+        if seed is None: 
+          seed = np.random.random_integers(low = 1, high = 2e09, size = 1)
+
+        self.rng = np.random.default_rng(seed = seed)
 
         self.N = X.shape[0]
         self.k = X.shape[1]
@@ -328,8 +330,10 @@ class WildboottestCL:
       self.bootclustid = np.unique(bootcluster)
       self.bootcluster = bootcluster
       
-    if seed is not None:
-      self.rng = np.random.default_rng(seed=seed)
+    if seed is None: 
+      seed = np.random.random_integers(low = 1, high = 2e09, size = 1)
+
+    self.rng = np.random.default_rng(seed = seed)
 
     self.N_G_bootcluster = len(self.bootclustid)
     self.G  = len(self.clustid)
