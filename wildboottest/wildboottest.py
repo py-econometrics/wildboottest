@@ -174,11 +174,12 @@ class WildboottestHC:
                 v = np.zeros(N)
                 if weights_type == 'rademacher':
                     for i in range(0, N):
-                        v[i] = self.rng.choice(np.array([-1,1]))
+                        #v[i] = self.rng.choice(np.array([-1,1]))
+                        v[i] = np.random.choice(np.array([-1,1]))
                 else:
-                    v = np.zeros(N)
                     for i in range(0, N):
-                        v[i] = self.rng.normal() 
+                        #v[i] = self.rng.normal() 
+                        v[i] = np.random.normal()
 
                 uhat_boot = uhat2 * v
                 yhat_boot = yhat + uhat_boot
