@@ -147,7 +147,6 @@ class WildboottestHC:
             raise TestHCWeightsException("For the heteroskedastic bootstrap, only weight tyes 'rademacher' and 'normal' are supported, but you provided '" + weights_type + "' .")
         self.weights_type = weights_type
           
-        k = np.where(self.R == 1)
         self.tXXinvX = self.tXXinv @ np.transpose(self.X)  
 
         if self.impose_null == True: 
