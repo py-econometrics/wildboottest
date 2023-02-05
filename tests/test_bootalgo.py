@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from wildboottest.wildboottest import wildboottest, WildboottestCL, WildboottestHC
+from wildboottest.wildboottest import WildboottestCL, WildboottestHC
 from wildboottest.weights import wild_draw_fun_dict
 import statsmodels.api as sm
 import numpy as np
