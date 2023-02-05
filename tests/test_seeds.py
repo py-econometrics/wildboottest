@@ -30,7 +30,7 @@ def test_results_from_same_seed():
     df = data(G = 20)
     model = sm.ols(formula='Y ~ X1 + X2', data=df)    
 
-    cluster_list = [df.years, None]:   
+    cluster_list = [df.years, None]
     for x in cluster_list: 
 
         # same seed used in function -> same results
