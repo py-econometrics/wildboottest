@@ -21,7 +21,7 @@ jobs:
           r-version: ${{ matrix.config.r }}
 
       - name: install fwildclusterboot
-        run: Rscript -e 'install.packages("fwildclusterboot", repos = "https://s3alfisc.r-universe.dev")'
+        run: Rscript -e 'install.packages("fwildclusterboot", repos="https://cloud.r-project.org")'
         shell: bash
 
 
