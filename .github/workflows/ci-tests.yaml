@@ -20,9 +20,6 @@ jobs:
         with:
           r-version: ${{ matrix.config.r }}
 
-      # is this needed?
-      - uses: r-lib/actions/setup-pandoc@v2
-
       - name: install fwildclusterboot
         run: Rscript -e 'install.packages("fwildclusterboot", repos="https://cloud.r-project.org")'
         shell: bash
