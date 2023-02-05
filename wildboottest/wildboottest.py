@@ -85,6 +85,7 @@ class WildboottestHC:
           self.Y = Y
 
         if seed is not None: 
+          self.global_seed_state = np.random.get_state()
           np.random.seed(seed)
 
         self.N = X.shape[0]
@@ -199,6 +200,9 @@ class WildboottestHC:
             Rt = np.transpose(R), 
             small_sample_correction=self.small_sample_correction
           )
+
+        if seed is not None: 
+            np.random.set_state(self.global_seed_state)
  
     def get_tstat(self):
     
@@ -329,7 +333,7 @@ class WildboottestCL:
       self.bootcluster = bootcluster
       
     if seed is None: 
-      seed = np.random.random_integers(low = 1, high = 2e09, size = 1)
+      seed = np.random.random_integers(low = 1, high =  (2**32 - 1), size = 1)
 
     self.rng = np.random.default_rng(seed = seed)
 
