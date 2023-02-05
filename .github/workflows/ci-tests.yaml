@@ -23,7 +23,7 @@ jobs:
       - name: install fwildclusterboot
         run: |
           Rscript -e 'install.packages("devtools", repos="https://cloud.r-project.org")'
-          Rscript -e 'devtools::install("s3alfisc/fwildclusterboot")'
+          Rscript -e 'devtools::install_github("s3alfisc/fwildclusterboot")'
         shell: bash
 
 
