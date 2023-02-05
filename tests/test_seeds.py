@@ -4,7 +4,6 @@ import statsmodels.formula.api as sm
 from wildboottest.wildboottest import wildboottest
 import numpy as np
 
-@pytest.fixture
 def data(G):
   np.random.seed(12312)
   N = 1000
@@ -30,7 +29,7 @@ def test_results_from_same_seed():
     df = data(G = 20)
     model = sm.ols(formula='Y ~ X1 + X2', data=df)    
 
-    cluster_list = [df.years, None]
+    cluster_list = [df.cluster, None]
     for x in cluster_list: 
 
         # same seed used in function -> same results
