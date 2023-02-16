@@ -84,9 +84,12 @@ class WildboottestHC:
         else:
           self.Y = Y
 
-        if seed is not None: 
+        if isinstance(seed, int): 
           self.global_seed_state = np.random.get_state()
-          np.random.seed(seed)
+          self.rng = seed
+        else: 
+          self.global_seed_state = None
+          self.rng = None
 
         self.N = X.shape[0]
         self.k = X.shape[1]
@@ -141,6 +144,10 @@ class WildboottestHC:
           self.uhat2 = self.uhat * self.resid_multiplier_boot
 
     def get_tboot(self, weights_type: Union[str, Callable]):
+
+        # fix rng if seed is provided - attention! this overwrites the global seed - reset it below
+        if isinstance(self.rng, int): 
+          np.random.normal(self.rng)
 
         if weights_type not in ['rademacher', 'norm']:
             raise TestHCWeightsException("For the heteroskedastic bootstrap, only weight tyes 'rademacher' and 'normal' are supported, but you provided '" + weights_type + "' .")
@@ -201,7 +208,8 @@ class WildboottestHC:
             small_sample_correction=self.small_sample_correction
           )
 
-        if seed is not None: 
+        # reset the global seed to its old state
+        if self.rng is not None: 
             np.random.set_state(self.global_seed_state)
  
     def get_tstat(self):
@@ -333,7 +341,7 @@ class WildboottestCL:
       self.bootcluster = bootcluster
       
     if seed is None: 
-      seed = np.random.random_integers(low = 1, high =  (2**32 - 1), size = 1)
+      seed = np.random.randint(low = 1, high =  (2**32 - 1), size = 1, dtype=np.int64)
 
     self.rng = np.random.default_rng(seed = seed)
 

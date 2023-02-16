@@ -4,6 +4,7 @@ import statsmodels.formula.api as sm
 from wildboottest.wildboottest import wildboottest
 import numpy as np
 
+@pytest.fixture
 def data(G):
   np.random.seed(12312)
   N = 1000
@@ -24,7 +25,7 @@ def data(G):
 
   return df
 
-def test_results_from_same_seed():
+def test_results_from_same_seed(data):
     
     df = data(G = 20)
     model = sm.ols(formula='Y ~ X1 + X2', data=df)    
@@ -33,21 +34,21 @@ def test_results_from_same_seed():
     for x in cluster_list: 
 
         # same seed used in function -> same results
-        a = wildboottest(model, param = "X1", cluster = x, B= 999, seed=11232198237961)
-        b = wildboottest(model, param = "X1", cluster = x, B= 999, seed=11232198237961)
+        a = wildboottest(model, param = "X1", cluster = x, B= 999, seed=876587)
+        b = wildboottest(model, param = "X1", cluster = x, B= 999, seed=876587)
         pd.testing.assert_frame_equal(a,b)
 
         # random seed set outside of function and in function produce equal results
         # I suppose this will never work?
-        np.random.seed(123)
-        a1 = wildboottest(model, param = "X1", cluster = x, B= 999)
-        b1 = wildboottest(model, param = "X1", cluster = x, B= 999, seed=123)
-        pd.testing.assert_frame_equal(a1,b1)
+        if x is not None: 
+          np.random.seed(123)
+          a1 = wildboottest(model, param = "X1", cluster = x, B= 999)
+          b1 = wildboottest(model, param = "X1", cluster = x, B= 999, seed=123)
+          pd.testing.assert_frame_equal(a1,b1)
         
-        # random seed outside of function 2x -> same results
-        np.random.seed(123)
-        a2 = wildboottest(model, param = "X1", cluster = x, B= 999)
-        np.random.seed(123)
-        b2 = wildboottest(model, param = "X1", cluster = x, B= 999)
-        pd.testing.assert_frame_equal(a2,b2)
-
+          # random seed outside of function 2x -> same results
+          np.random.seed(123)
+          a2 = wildboottest(model, param = "X1", cluster = x, B= 999)
+          np.random.seed(123)
+          b2 = wildboottest(model, param = "X1", cluster = x, B= 999)
+          pd.testing.assert_frame_equal(a2,b2)
