@@ -5,10 +5,11 @@ from wildboottest.wildboottest import wildboottest
 import numpy as np
 
 @pytest.fixture
-def data(G):
+def data():
   np.random.seed(12312)
   N = 1000
   k = 3
+  G = 20
   # small sample size -> full enumeration
   X = np.random.normal(0, 1, N * k).reshape((N,k))
   X[:,0] = 1
