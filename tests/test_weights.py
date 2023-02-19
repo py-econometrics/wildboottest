@@ -11,7 +11,7 @@ full_enum = [True, False]
 ng_bootclusters = list(range(0,100, 10))
 boot_iter = list(range(0,1000,400))
 
-#@pytest.fixture
+@pytest.fixture
 def data():
     N = 100
     k = 2

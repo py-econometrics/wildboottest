@@ -84,12 +84,10 @@ class WildboottestHC:
         else:
           self.Y = Y
 
-        if isinstance(seed, int): 
-          self.global_seed_state = np.random.get_state()
-          self.rng = seed
-        else: 
-          self.global_seed_state = None
-          self.rng = None
+        if seed is None: 
+          seed = np.random.randint(low = 1, high =  (2**32 - 1), size = 1, dtype=np.int64)
+
+        self.rng = np.random.default_rng(seed = seed)
 
         self.N = X.shape[0]
         self.k = X.shape[1]
@@ -145,10 +143,6 @@ class WildboottestHC:
 
     def get_tboot(self, weights_type: Union[str, Callable]):
 
-        # fix rng if seed is provided - attention! this overwrites the global seed - reset it below
-        if isinstance(self.rng, int): 
-          np.random.normal(self.rng)
-
         if weights_type not in ['rademacher', 'norm']:
             raise TestHCWeightsException("For the heteroskedastic bootstrap, only weight tyes 'rademacher' and 'normal' are supported, but you provided '" + weights_type + "' .")
         self.weights_type = weights_type
@@ -165,26 +159,20 @@ class WildboottestHC:
         R = self.R.reshape((self.k, 1)).astype("float")
         self.RXXinvX_2 = np.power(np.transpose(R) @ self.tXXinv @ np.transpose(self.X), 2)
         #RXXinv_2 = np.power(np.transpose(R) @ self.tXXinv, 2)
-
-        @njit(parallel = True)
+        
+        #@jit
         def _run_hc_bootstrap(B, weights_type, N, X, yhat, uhat2, tXXinv, RXXinvX_2, Rt, small_sample_correction):
-
-            #rng = np.random.default_rng()
 
             t_boot = np.zeros(B)
             tXXinvX = tXXinv @ np.transpose(X)
 
-            for b in prange(0, B):
+            for b in range(0, B):
             # create weights vector. mammen weights not supported via numba
                 v = np.zeros(N)
                 if weights_type == 'rademacher':
-                    for i in range(0, N):
-                        #v[i] = self.rng.choice(np.array([-1,1]))
-                        v[i] = np.random.choice(np.array([-1,1]))
-                else:
-                    for i in range(0, N):
-                        #v[i] = self.rng.normal() 
-                        v[i] = np.random.normal()
+                  v = self.rng.choice([-1,1], size = N, replace = True)
+                elif weights_type == "normal":
+                  v = self.rng.normal(0, 1, size = N)
 
                 uhat_boot = uhat2 * v
                 yhat_boot = yhat + uhat_boot
@@ -206,11 +194,7 @@ class WildboottestHC:
             RXXinvX_2 = self.RXXinvX_2, 
             Rt = np.transpose(R), 
             small_sample_correction=self.small_sample_correction
-          )
-
-        # reset the global seed to its old state
-        if self.rng is not None: 
-            np.random.set_state(self.global_seed_state)
+          )        
  
     def get_tstat(self):
     
