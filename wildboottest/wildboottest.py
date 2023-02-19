@@ -103,8 +103,8 @@ class WildboottestHC:
         Raises: 
           TestBootstrapTypeException: If non-appropriate bootstrap types are selected
         '''
-        if bootstrap_type not in ['11', '22', '33']:
-            raise TestBootstrapTypeException("For the heteroskedastic (i.e. non-clustered) wild bootstrap, only types '11', '22' and '33' are supported.")
+        if bootstrap_type not in ['11', '21', '31']:
+            raise TestBootstrapTypeException("For the heteroskedastic (i.e. non-clustered) wild bootstrap, only types '11', '21' and '31' are supported.")
         
         # allow for arbitrary different adjustments for bootstrap and standard t-stat
         self.tXXinv = np.linalg.inv(np.transpose(self.X) @ self.X)
