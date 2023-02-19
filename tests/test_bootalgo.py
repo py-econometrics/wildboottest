@@ -52,6 +52,7 @@ def test_r_vs_py_heteroskedastic_stochastic():
     X = df[['intercept', 'X1', 'X2']]
     Y = df['Y']
     R = np.array([0,1,0])
+    r = 0
       
     # convert df to an R dataframe
     with localconverter(ro.default_converter + pandas2ri.converter):
@@ -68,7 +69,7 @@ def test_r_vs_py_heteroskedastic_stochastic():
         for weights_type in ["rademacher", "mammen", "norm", "webb"]:
           for pval_type in ['two-tailed', 'equal-tailed', '>', '<']:
   
-            boot = WildboottestHC(X = X, Y = Y, R = R, B = B, seed = 12341)
+            boot = WildboottestHC(X = X, Y = Y, R = R, r = r, B = B, seed = 12341)
             boot.get_adjustments(bootstrap_type = bootstrap_type)
             boot.get_uhat(impose_null = impose_null)
             boot.get_tboot(weights_type = weights_type)

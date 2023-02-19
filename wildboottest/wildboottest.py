@@ -40,9 +40,10 @@ class WildboottestHC:
       >>> u = np.random.normal(0,1,N)
       >>> Y = 1 + X @ beta + u
       >>> R = np.array([1, 0, 0])
+      >>> r = 0
       >>> B = 999
 
-      >>> wb = WildboottestHC(X = X, Y = Y, R = R, B = B)
+      >>> wb = WildboottestHC(X = X, Y = Y, R = R, r = 0, B = B)
       >>> wb.get_adjustments(bootstrap_type = '11')
       >>> wb.get_uhat(impose_null = True)
       >>> wb.get_tboot(weights_type = "webb")
@@ -53,6 +54,7 @@ class WildboottestHC:
     def __init__(self, X : Union[np.ndarray, pd.DataFrame, pd.Series], 
           Y: Union[np.ndarray, pd.DataFrame, pd.Series], 
           R : Union[np.ndarray, pd.DataFrame], 
+          r: Union[np.ndarray, float],
           B: int, 
           seed:  Union[int, None] = None) -> None:
             
@@ -93,6 +95,7 @@ class WildboottestHC:
         self.k = X.shape[1]
         self.B = B
         self.R = R
+        self.r = r
         
         if self.X.shape[1] != self.R.shape[0]:
           raise TestMatrixNonConformabilityException("The number of rows in the test matrix R, does not ")
@@ -106,16 +109,9 @@ class WildboottestHC:
         if bootstrap_type not in ['11', '21', '31']:
             raise TestBootstrapTypeException("For the heteroskedastic (i.e. non-clustered) wild bootstrap, only types '11', '21' and '31' are supported.")
         
-        # allow for arbitrary different adjustments for bootstrap and standard t-stat
-        # resid_multiplier_boot -> score on dgp? 
-        # resid_multiplier_stat -> score on vcov? 
+
         self.tXXinv = np.linalg.inv(np.transpose(self.X) @ self.X)
         self.resid_multiplier_boot, self.small_sample_correction = _adjust_scores(self.X, self.tXXinv, bootstrap_type[0])
-        #self.resid_multiplier_stat = 1
-        #if bootstrap_type[0] == bootstrap_type[1]:
-        #  self.resid_multiplier_stat = self.resid_multiplier_boot
-        #else: 
-        #  self.resid_multiplier_stat = _adjust_scores(self.X, self.tXXinv, bootstrap_type[1])
 
     def get_uhat(self, impose_null : bool): 
       
@@ -133,8 +129,7 @@ class WildboottestHC:
       
         if impose_null: 
           self.impose_null = True
-          r = 0
-          self.beta_r = self.beta_hat - self.tXXinv @ self.R * ( 1 / (np.transpose(self.R) @ self.tXXinv @ self.R)) * (np.transpose(self.R) @ self.beta_hat - r)#self.uhat_r = self.Y - self.beta_r 
+          self.beta_r = self.beta_hat - self.tXXinv @ self.R * ( 1 / (np.transpose(self.R) @ self.tXXinv @ self.R)) * (np.transpose(self.R) @ self.beta_hat - self.r)#self.uhat_r = self.Y - self.beta_r 
           self.uhat_r = self.Y - self.X @ self.beta_r 
           self.uhat2 = self.uhat_r * self.resid_multiplier_boot
         else: 
@@ -718,6 +713,7 @@ def wildboottest(model : 'OLS',
 
       R = np.zeros(len(xnames))
       R[xnames.index(param)] = 1
+      r = 0
       # Just test for beta=0
       
       # is it possible to fetch the clustering variables from the pre-processed data 
@@ -726,7 +722,7 @@ def wildboottest(model : 'OLS',
 
       if cluster is None: 
       
-          boot = WildboottestHC(X = X, Y = Y, R = R, B = B, seed = seed)
+          boot = WildboottestHC(X = X, Y = Y, R = R, r = r, B = B, seed = seed)
           boot.get_adjustments(bootstrap_type = bootstrap_type)
           boot.get_uhat(impose_null = impose_null)
           boot.get_tboot(weights_type = weights_type)
