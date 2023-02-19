@@ -107,12 +107,15 @@ class WildboottestHC:
             raise TestBootstrapTypeException("For the heteroskedastic (i.e. non-clustered) wild bootstrap, only types '11', '21' and '31' are supported.")
         
         # allow for arbitrary different adjustments for bootstrap and standard t-stat
+        # resid_multiplier_boot -> score on dgp? 
+        # resid_multiplier_stat -> score on vcov? 
         self.tXXinv = np.linalg.inv(np.transpose(self.X) @ self.X)
         self.resid_multiplier_boot, self.small_sample_correction = _adjust_scores(self.X, self.tXXinv, bootstrap_type[0])
-        if bootstrap_type[0] == bootstrap_type[1]:
-          self.resid_multiplier_stat = self.resid_multiplier_boot
-        else: 
-          self.resid_multiplier_stat = _adjust_scores(self.X, self.tXXinv, bootstrap_type[1])
+        #self.resid_multiplier_stat = 1
+        #if bootstrap_type[0] == bootstrap_type[1]:
+        #  self.resid_multiplier_stat = self.resid_multiplier_boot
+        #else: 
+        #  self.resid_multiplier_stat = _adjust_scores(self.X, self.tXXinv, bootstrap_type[1])
 
     def get_uhat(self, impose_null : bool): 
       
@@ -127,10 +130,7 @@ class WildboottestHC:
         self.tXy = np.transpose(self.X) @ self.Y
         self.beta_hat = self.tXXinv @ self.tXy 
         self.uhat = self.Y - self.X @ self.beta_hat
-        
-        
-        self.uhat_stat = self.uhat * self.resid_multiplier_stat
-
+      
         if impose_null: 
           self.impose_null = True
           r = 0
@@ -203,7 +203,7 @@ class WildboottestHC:
  
     def get_tstat(self):
     
-        cov = self.small_sample_correction * self.RXXinvX_2 @ np.power(self.uhat_stat, 2)
+        cov = self.small_sample_correction * self.RXXinvX_2 @ np.power(self.uhat, 2)
         self.t_stat = (np.transpose(self.R) @ self.beta_hat / np.sqrt(cov))
           
     def get_pvalue(self, pval_type = "two-tailed"):
