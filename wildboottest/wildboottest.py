@@ -42,11 +42,10 @@ class WildboottestHC:
       >>> R = np.array([1, 0, 0])
       >>> r = 0
       >>> B = 999
-
       >>> wb = WildboottestHC(X = X, Y = Y, R = R, r = 0, B = B)
       >>> wb.get_adjustments(bootstrap_type = '11')
       >>> wb.get_uhat(impose_null = True)
-      >>> wb.get_tboot(weights_type = "webb")
+      >>> wb.get_tboot(weights_type = "rademacher")
       >>> wb.get_tstat()
       >>> wb.get_pvalue()  
     """
