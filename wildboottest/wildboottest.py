@@ -161,18 +161,22 @@ class WildboottestHC:
         #RXXinv_2 = np.power(np.transpose(R) @ self.tXXinv, 2)
         
         #@jit
-        def _run_hc_bootstrap(B, weights_type, N, X, yhat, uhat2, tXXinv, RXXinvX_2, Rt, small_sample_correction):
+        def _run_hc_bootstrap(B, weights_type, N, X, yhat, uhat2, tXXinv, RXXinvX_2, Rt, small_sample_correction, rng):
 
             t_boot = np.zeros(B)
             tXXinvX = tXXinv @ np.transpose(X)
 
             for b in range(0, B):
             # create weights vector. mammen weights not supported via numba
-                v = np.zeros(N)
-                if weights_type == 'rademacher':
-                  v = self.rng.choice([-1,1], size = N, replace = True)
-                elif weights_type == "normal":
-                  v = self.rng.normal(0, 1, size = N)
+                v, _ = draw_weights(
+                          t = weights_type, 
+                          full_enumeration = False, 
+                          N_G_bootcluster = N,
+                          boot_iter = 1,
+                          rng=rng
+                        )
+                
+                v = v.flatten()
 
                 uhat_boot = uhat2 * v
                 yhat_boot = yhat + uhat_boot
@@ -193,7 +197,8 @@ class WildboottestHC:
             tXXinv = self.tXXinv, 
             RXXinvX_2 = self.RXXinvX_2, 
             Rt = np.transpose(R), 
-            small_sample_correction=self.small_sample_correction
+            small_sample_correction=self.small_sample_correction, 
+            rng = self.rng
           )        
  
     def get_tstat(self):

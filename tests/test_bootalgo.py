@@ -65,7 +65,7 @@ def test_r_vs_py_heteroskedastic_stochastic():
 
     for bootstrap_type in ['11']: 
       for impose_null in [True]:
-        for weights_type in ["rademacher"]:
+        for weights_type in ["rademacher", "mammen", "norm", "webb"]:
           for pval_type in ['two-tailed', 'equal-tailed', '>', '<']:
   
             boot = WildboottestHC(X = X, Y = Y, R = R, B = B, seed = 12341)
