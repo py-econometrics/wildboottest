@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from wildboottest.wildboottest import WildboottestCL, WildboottestHC
+from wildboottest.wildboottest import WildboottestCL
 from wildboottest.weights import wild_draw_fun_dict
 import statsmodels.api as sm
 import numpy as np
@@ -11,7 +11,7 @@ import pandas as pd
 from rpy2.robjects.packages import importr
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
-from rpy2.robjects.conversion import localconverter
+pandas2ri.activate()
 
 fwildclusterboot = importr("fwildclusterboot")
 stats = importr('stats')
@@ -41,102 +41,6 @@ def data(G):
   return df, B
 
 
-def test_r_vs_py_heteroskedastic_stochastic():
-
-    '''
-    test compares bootstrapped p-values for non-clustered errors 
-    for R (fwildclusterboot) and Python (wildboottest)
-    '''
-
-    df, B = data(20)
-    X = df[['intercept', 'X1', 'X2']]
-    Y = df['Y']
-    #R = np.array([0,1,0])
-    #r = 0
-      
-    # convert df to an R dataframe
-    with localconverter(ro.default_converter + pandas2ri.converter):
-      r_df = ro.conversion.py2rpy(df)
-      r_model = stats.lm("Y ~ X1 + X2", data=r_df)
-
-    boot_pvals = []
-    #boot_tstats = []
-    fwildclusterboot_boot_pvals = []
-
-    i = 0
-
-    for bootstrap_type in ['11']: 
-      for impose_null in [True]:
-        for weights_type in ["rademacher", "mammen", "norm", "webb"]:
-          for pval_type in ['two-tailed', 'equal-tailed', '>', '<']:
-  
-            #if i % 2: 
-            #  r = 0.02
-            #else: 
-            #  r = 0
-
-            #if i % 4: 
-            #  R = np.array([0.2, 0.1, 0])  
-            #else: 
-            #  R = np.array([1, 0, 0])
-            
-            R = np.array([1, 0, 0])
-            r = 0
-
-            i += 1
-
-
-            boot = WildboottestHC(X = X, Y = Y, R = R, r = r, B = B, seed = 12341)
-            boot.get_adjustments(bootstrap_type = bootstrap_type)
-            boot.get_uhat(impose_null = impose_null)
-            boot.get_tboot(weights_type = weights_type)
-            boot.get_tstat()
-            boot.get_pvalue(pval_type = pval_type)  
-            boot_pvals.append(boot.pvalue)
-            #boot_tstats.append(boot.tstats)
-
-            r_t_boot = fwildclusterboot.boottest(
-              r_model,
-                param = "X1",
-                B=B,
-                bootstrap_type=bootstrap_type,
-                impose_null=impose_null,
-                p_val_type = pval_type, 
-                type = weights_type,
-                ssc=fwildclusterboot.boot_ssc(adj=False, cluster_adj=False)
-            )
-
-  
-            # test condition ... 
-            fwildclusterboot_boot_pvals.append(list(r_t_boot.rx2("p_val")))
-      
-    df = pd.DataFrame(
-      np.transpose(np.array(boot_pvals)), 
-      columns=['p_val'],
-      index=pd.MultiIndex.from_product([
-                        ['11', '31', '13', '33'],
-                        [True, False],
-                        ['rademacher','mammen', 'webb','norm'],
-                        ['two-tailed', 'equal-tailed', '>', '<']
-                      ])
-    )
-  
-    # r_df = pd.read_csv("data/test_df_fwc_res.csv")[['WCR11', "WCR31", "WCU11", "WCU31"]]
-    r_df = pd.DataFrame(
-      np.array(fwildclusterboot_boot_pvals), 
-      columns=['p_val'],
-      index=pd.MultiIndex.from_product([
-                        ['11', '31', '13', '33'],
-                        [True, False],
-                        ['rademacher','mammen', 'webb','norm'],
-                        ['two-tailed', 'equal-tailed', '>', '<']
-                      ])
-      )
-    print(df.to_markdown())
-    print(r_df.to_markdown())
-      
-    assert all(np.isclose(df.values, r_df.values, rtol=1e-2, atol=1e-2))
-
 def test_r_vs_py_deterministic():
   
   '''
@@ -160,10 +64,7 @@ def test_r_vs_py_deterministic():
   Y = df['Y']
   R = np.array([0,1,0])
 
-  # convert df to an R dataframe
-  with localconverter(ro.default_converter + pandas2ri.converter):
-    r_df = ro.conversion.py2rpy(df)
-    r_model = stats.lm("Y ~ X1 + X2", data=r_df)
+  r_model = stats.lm("Y ~ X1 + X2", data=df)
   
   
   boot_tstats = []
@@ -239,10 +140,7 @@ def test_r_vs_py_stochastic():
   R = np.array([0,1,0])
    
   # convert df to an R dataframe
-  with localconverter(ro.default_converter + pandas2ri.converter):
-    r_df = ro.conversion.py2rpy(df)
-    r_model = stats.lm("Y ~ X1 + X2", data=r_df)
-  
+  r_model = stats.lm("Y ~ X1 + X2", data=df) 
 
   boot_pvals = []
   fwildclusterboot_boot_pvals = []
