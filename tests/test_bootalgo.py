@@ -48,7 +48,7 @@ def test_r_vs_py_heteroskedastic_stochastic():
     for R (fwildclusterboot) and Python (wildboottest)
     '''
 
-    df = data(20)
+    df, B = data(20)
     X = df[['intercept', 'X1', 'X2']]
     Y = df['Y']
     R = np.array([0,1,0])
