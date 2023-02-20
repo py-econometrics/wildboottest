@@ -743,7 +743,7 @@ def wildboottest(model : 'OLS',
           boot.get_pvalue(pval_type = "two-tailed")
         
       pvalues.append(boot.pvalue)
-      tstats.append(boot.t_stat[0])
+      tstats.append(boot.t_stat)
       
       return pvalues, tstats, full_enumeration_warn
     
