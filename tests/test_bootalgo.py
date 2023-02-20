@@ -58,7 +58,6 @@ def test_r_vs_py_heteroskedastic_stochastic():
     with localconverter(ro.default_converter + pandas2ri.converter):
       r_df = ro.conversion.py2rpy(df)
       r_model = stats.lm("Y ~ X1 + X2", data=r_df)
-      R = np.array([0,1,0])
 
     boot_pvals = []
     #boot_tstats = []
@@ -71,16 +70,19 @@ def test_r_vs_py_heteroskedastic_stochastic():
         for weights_type in ["rademacher", "mammen", "norm", "webb"]:
           for pval_type in ['two-tailed', 'equal-tailed', '>', '<']:
   
-            if i % 2: 
-              r = 0.02
-            else: 
-              r = 0
+            #if i % 2: 
+            #  r = 0.02
+            #else: 
+            #  r = 0
 
-            if i % 4: 
-              R = np.array([0.2, 0.1, 0])  
-            else: 
-              R = np.array([1, 0, 0])
+            #if i % 4: 
+            #  R = np.array([0.2, 0.1, 0])  
+            #else: 
+            #  R = np.array([1, 0, 0])
             
+            R = np.array([1, 0, 0])
+            r = 0
+
             i += 1
 
 
@@ -161,9 +163,8 @@ def test_r_vs_py_deterministic():
   # convert df to an R dataframe
   with localconverter(ro.default_converter + pandas2ri.converter):
     r_df = ro.conversion.py2rpy(df)
-
-  r_model = stats.lm("Y ~ X1 + X2", data=r_df)
-  R = np.array([0,1,0])
+    r_model = stats.lm("Y ~ X1 + X2", data=r_df)
+  
   
   boot_tstats = []
   fwildclusterboot_boot_tstats = []
@@ -240,10 +241,8 @@ def test_r_vs_py_stochastic():
   # convert df to an R dataframe
   with localconverter(ro.default_converter + pandas2ri.converter):
     r_df = ro.conversion.py2rpy(df)
-
-  r_model = stats.lm("Y ~ X1 + X2", data=r_df)
-  R = np.array([0,1,0])
-
+    r_model = stats.lm("Y ~ X1 + X2", data=r_df)
+  
 
   boot_pvals = []
   fwildclusterboot_boot_pvals = []
