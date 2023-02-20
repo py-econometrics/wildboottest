@@ -335,6 +335,7 @@ class WildboottestCL:
     self.k = X.shape[1]
     self.B = B
     self.R = R
+    self.r = 0
     
     if self.X.shape[1] != self.R.shape[0]:
       raise TestMatrixNonConformabilityException("The number of rows in the test matrix R, does not ")
@@ -620,8 +621,7 @@ class WildboottestCL:
   def get_tstat(self):
         
     se = np.sqrt(self.ssc * self.R @ self.vcov @ np.transpose(self.R))
-    t_stats = self.beta_hat / se
-    self.t_stat = t_stats[np.where(self.R == 1)]
+    self.t_stat = (np.transpose(self.R) @ self.beta_hat - self.r )/ se
 
   def get_pvalue(self, pval_type = "two-tailed"):
     
