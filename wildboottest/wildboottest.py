@@ -198,7 +198,7 @@ class WildboottestHC:
     def get_tstat(self):
     
         cov = self.small_sample_correction * self.RXXinvX_2 @ np.power(self.uhat, 2)
-        self.t_stat = (np.transpose(self.R) @ self.beta_hat / np.sqrt(cov))
+        self.t_stat = (np.transpose(self.R) @ self.beta_hat - self.r) / np.sqrt(cov)
           
     def get_pvalue(self, pval_type = "two-tailed"):
       
