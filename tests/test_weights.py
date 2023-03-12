@@ -4,6 +4,8 @@ from wildboottest.wildboottest import WildboottestCL
 import numpy as np
 import pandas as pd
 
+np.random.seed(89756)
+
 ts = list(wild_draw_fun_dict.keys())
 full_enum = [True, False]
 ng_bootclusters = list(range(0,100, 10))
@@ -29,15 +31,15 @@ def data():
 
 def test_none_wild_draw_fun():
     with pytest.raises(WildDrawFunctionException):
-        draw_weights(None, True, 1,1)
+        draw_weights(None, 1, True, 1,1)
 
 def test_string_not_avail_wild_draw_fun():
     with pytest.raises(WildDrawFunctionException):
-        draw_weights('something weird', True, 1,1)
+        draw_weights('something weird', 2, True, 1,1)
         
 def test_wrong_type_wild_draw_fun():
     with pytest.raises(ValueError):
-        draw_weights([1], True, 1,1)
+        draw_weights([1], 3, True, 1,1)
         
 def test_different_weights(data):
     
@@ -58,9 +60,7 @@ def test_different_weights(data):
         results_dict[w] = boot.pvalue
         
     results_series = pd.Series(results_dict)
+
+    mapd = (results_series - results_series.mean()).abs().mean()  / results_series.mean()    
         
-    mapd = results_series.mad() / results_series.mean()
-        
-    assert  mapd <= .1 # make sure mean absolute percentage deviation is less than 10% (ad hoc)
-    
-    
+    assert  mapd <= .1# make sure mean absolute percentage deviation is less than 10% (ad hoc)

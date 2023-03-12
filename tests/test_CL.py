@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from wildboottest.wildboottest import wildboottest, WildboottestCL
+from wildboottest.wildboottest import WildboottestCL
 from wildboottest.weights import wild_draw_fun_dict
 import statsmodels.api as sm
 import numpy as np
@@ -11,7 +11,7 @@ import pandas as pd
 from rpy2.robjects.packages import importr
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
-from rpy2.robjects.conversion import localconverter
+pandas2ri.activate()
 
 fwildclusterboot = importr("fwildclusterboot")
 stats = importr('stats')
@@ -41,36 +41,6 @@ def data(G):
   return df, B
 
 
-def hc_vs_cluster_bootstrap(): 
-
-  '''
-  compare results from HC vs cluster bootstrap
-  '''
-
-  def reldiff(x, y): 
-      1 - x / y 
-
-  df, B = data(5)
-  N = df.shape[0]
-  cluster = pd.Series(range(0, N))
-  X = df[['intercept', 'X1', 'X2']]
-  Y = df['Y']
-  R = np.array([0,1,0])
-
-  fit = sm.OLS(Y, X)
-  # all allowed types
-  cl = wildboottest(fit, param = "X1", cluster = cluster, bootstrap_type='11')
-
-  types = ['11', '22', '33']
-
-  for type in types: 
-
-      hc = wildboottest(fit, param = "X1", bootstrap_type=type)
-
-      assert reldiff(hc.xs('X1')[0], cl.xs('X1')[0])
-      assert reldiff(hc.xs('X1')[1], cl.xs('X1')[1])
-
-
 def test_r_vs_py_deterministic():
   
   '''
@@ -94,17 +64,13 @@ def test_r_vs_py_deterministic():
   Y = df['Y']
   R = np.array([0,1,0])
 
-  # convert df to an R dataframe
-  with localconverter(ro.default_converter + pandas2ri.converter):
-    r_df = ro.conversion.py2rpy(df)
-
-  r_model = stats.lm("Y ~ X1 + X2", data=r_df)
-  R = np.array([0,1,0])
+  r_model = stats.lm("Y ~ X1 + X2", data=df)
+  
   
   boot_tstats = []
   fwildclusterboot_boot_tstats = []
   
-  for bootstrap_type in ['11', '31', '31', '33']: 
+  for bootstrap_type in ['11', '31', '13', '33']: 
     for impose_null in [True, False]:
       # python implementation
       boot = WildboottestCL(X = X, Y = Y, cluster = cluster, bootcluster = cluster, R = R, B = B, seed = 12341)
@@ -174,12 +140,7 @@ def test_r_vs_py_stochastic():
   R = np.array([0,1,0])
    
   # convert df to an R dataframe
-  with localconverter(ro.default_converter + pandas2ri.converter):
-    r_df = ro.conversion.py2rpy(df)
-
-  r_model = stats.lm("Y ~ X1 + X2", data=r_df)
-  R = np.array([0,1,0])
-
+  r_model = stats.lm("Y ~ X1 + X2", data=df) 
 
   boot_pvals = []
   fwildclusterboot_boot_pvals = []
@@ -237,6 +198,7 @@ def test_r_vs_py_stochastic():
   print(r_df.to_markdown())
   
   assert all(np.isclose(df.values, r_df.values, rtol=1e-2, atol=1e-2))
+
 
 def test_error_warnings():
   '''

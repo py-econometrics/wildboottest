@@ -5,12 +5,10 @@ from itertools import product
 class WildDrawFunctionException(Exception):
     pass
 
-def rademacher(n: int) -> np.ndarray:
-    rng = np.random.default_rng()
+def rademacher(n: int, rng: np.random.Generator) -> np.ndarray:
     return rng.choice([-1,1],size=n, replace=True)
 
-def mammen(n: int) -> np.ndarray:
-    rng = np.random.default_rng()
+def mammen(n: int, rng: np.random.Generator) -> np.ndarray:
     return rng.choice(
         a= np.array([-1, 1]) * (np.sqrt(5) + np.array([-1, 1])) / 2, #TODO: #10 Should this divide the whole expression by 2 or just the second part
         size=n,
@@ -18,12 +16,10 @@ def mammen(n: int) -> np.ndarray:
         p = (np.sqrt(5) + np.array([1, -1])) / (2 * np.sqrt(5))
     )
     
-def norm(n):
-    rng = np.random.default_rng()
+def norm(n:int, rng: np.random.Generator):
     return rng.normal(size=n)
 
-def webb(n):
-    rng = np.random.default_rng()
+def webb(n: int, rng: np.random.Generator):
     return rng.choice(
         a = np.concatenate([-np.sqrt(np.array([3,2,1]) / 2), np.sqrt(np.array([1,2,3]) / 2)]),
         replace=True,
@@ -38,7 +34,9 @@ wild_draw_fun_dict = {
 }
 
   
-def draw_weights(t : Union[str, Callable], full_enumeration: bool, N_G_bootcluster: int, boot_iter: int) -> Tuple[np.ndarray, int]:
+def draw_weights(t : Union[str, Callable], full_enumeration: bool, 
+                 N_G_bootcluster: int, boot_iter: int,
+                 rng: np.random.Generator) -> Tuple[np.ndarray, int]:
     """draw bootstrap weights
     Args:
         t (str|callable): the type of the weights distribution. Either 'rademacher', 'mammen', 'norm' or 'webb'
@@ -75,7 +73,7 @@ def draw_weights(t : Union[str, Callable], full_enumeration: bool, N_G_bootclust
     else:
         # else: just draw with replacement - by chance, some permutations
         # might occur more than once
-        v0 = wild_draw_fun(n = N_G_bootcluster * boot_iter)
+        v0 = wild_draw_fun(n = N_G_bootcluster * boot_iter, rng=rng)
         v0 = v0.reshape(N_G_bootcluster, boot_iter) # weights matrix
     
     # update boot_iter (B) - only relevant in enumeration case
