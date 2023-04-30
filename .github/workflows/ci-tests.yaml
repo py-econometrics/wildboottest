@@ -18,7 +18,7 @@ jobs:
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: ${{ matrix.config.r }}
+          r-version: '4.2.0'
 
       - name: install fwildclusterboot
         run: Rscript -e 'install.packages("fwildclusterboot", repos="https://cloud.r-project.org")'
@@ -34,7 +34,7 @@ jobs:
       - name: Install
         run: |
           pip install -e .
-          pip install -r requirements_test.txt          
+          pip install -r requirements_test.txt
 
       - name: Run tests
         run: pytest
