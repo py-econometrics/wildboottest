@@ -43,7 +43,7 @@ poetry-dynamic-versioning = "^0.21.1"
 
 [tool.poetry.group.dev.dependencies]
 mkdocstrings-python-legacy = "^0.2.3"
-mkdocstrings = "^0.19.0"
+mkdocstrings = {version = "^0.19.0", extras = ["python"], optional = true }
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
