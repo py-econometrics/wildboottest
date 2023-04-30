@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "wildboottest"
-version = "0.1.10"
+version = "0.1.11"
 description = "Wild Cluster Bootstrap Inference for Linear Models in Python"
 authors = [
   "Alexander Fischer <alexander-fischer1801@t-online.de>",
@@ -24,7 +24,7 @@ repository="https://github.com/s3alfisc/wildboottest"
 [tool.poetry.dependencies]
 python=">=3.8,<3.11"
 numba="^0.55"
-numpy=">=1.22"
+numpy="^1.18"
 pandas="^1.4"
 pytest="^7.2.0"
 statsmodels="^0.13"
