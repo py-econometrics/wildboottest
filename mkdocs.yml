@@ -4,11 +4,8 @@ nav:
   - WildBoottest: base.md
   - Weighting: weights.md
   - Library APIs: library_apis.md
-extra:
-  version:
-    provider: mike
 theme:
-  name: material    
+  name: readthedocs
   features:
     - navigation.instant
     - navigation.tabs
