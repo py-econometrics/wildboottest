@@ -648,6 +648,7 @@ def wildboottest(model : 'OLS',
                  seed: Union[str, None] = None,
                  adj: bool = True,
                  cluster_adj: bool = True,
+                 parallel: bool = True,
                  show=True) -> pd.DataFrame:
   """Run a wild cluster bootstrap based on an object of class 'statsmodels.regression.linear_model.OLS'
 
@@ -664,6 +665,10 @@ def wildboottest(model : 'OLS',
       bootstrap_type (str, optional):A string of length one. Allows to choose the bootstrap type
                           to be run. Either '11', '31', '13' or '33'. '11' by default. Defaults to '11'.
       seed (Union[str, None], optional): Option to provide a random seed. Defaults to None.
+      adj (bool, optional): Whether to adjust for small sample. Defaults to True.
+      cluster_adj (bool, optional): Whether to do a cluster-robust small sample correction. Defaults to True.
+      parallel (bool, optional): Whether to run the bootstrap in parallel. Defaults to True.
+      show (bool, optional): Whether to print the results. Defaults to True.
 
   Raises:
       Exception: Raises if `param` is not a string
@@ -733,7 +738,7 @@ def wildboottest(model : 'OLS',
       else:
 
           boot = WildboottestCL(X = X, Y = Y, cluster = cluster,
-                              R = R, B = B, seed = seed)
+                              R = R, B = B, seed = seed, parallel = parallel)
           boot.get_scores(bootstrap_type = bootstrap_type, impose_null = impose_null, adj=adj, cluster_adj=cluster_adj)
           _, _, full_enumeration_warn = boot.get_weights(weights_type = weights_type)
           boot.get_numer()
