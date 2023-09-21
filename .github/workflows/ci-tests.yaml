@@ -12,10 +12,10 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
-        python-version: ["3.9"]
+        os: ["ubuntu-latest"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
       - name: Checkout source
@@ -26,7 +26,7 @@ jobs:
         with:
           r-version: '4.2.0'
 
-      - name: install fwildclusterboot
+      - name: install fwildclusterboot for testing
         run: Rscript -e 'install.packages("fwildclusterboot", repos="https://cloud.r-project.org")'
         shell: bash
 
