@@ -296,6 +296,8 @@ class WildboottestCL:
     #assert bootstrap_type in ['11', '13', '31', '33']
     #assert impose_null in [True, False]
 
+    self.parallel = parallel
+
     if bootcluster is None:
       bootcluster = cluster
 
@@ -528,7 +530,7 @@ class WildboottestCL:
         # now compute denominator
         # numba / cython / c++ optimization possible? Porting this part from
         # R to c++ gives good speed improvements
-        @njit(parallel = parallel)
+        @njit(parallel = self.parallel)
         def compute_denom(Cg, H, bootclustid, B, G, v, ssc):
 
           denom = np.zeros(B)
