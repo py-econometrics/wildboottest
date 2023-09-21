@@ -274,7 +274,8 @@ class WildboottestCL:
                R : Union[np.ndarray, pd.DataFrame],
                B: int,
                bootcluster: Union[np.ndarray, pd.DataFrame, pd.Series, None] = None,
-               seed:  Union[int, None] = None) -> None:
+               seed:  Union[int, None] = None,
+               parallel: bool = True) -> None:
     """Initializes the Wild Cluster Bootstrap Class
 
     Args:
@@ -285,7 +286,7 @@ class WildboottestCL:
         B (int): bootstrap iterations
         bootcluster (Union[np.ndarray, pd.DataFrame, pd.Series, None], optional): Sub-cluster array. Defaults to None.
         seed (Union[int, None], optional): Random seed for random weight types. Defaults to None.
-
+        parallel (bool, optional): Whether to run the bootstrap in parallel. Defaults to True.
     Raises:
         TypeError: Raise if input arrays are lists
         TestMatrixNonConformabilityException: Raise if constraint matrix shape does not conform to X
@@ -527,7 +528,7 @@ class WildboottestCL:
         # now compute denominator
         # numba / cython / c++ optimization possible? Porting this part from
         # R to c++ gives good speed improvements
-        @njit(parallel=True)
+        @njit(parallel = parallel)
         def compute_denom(Cg, H, bootclustid, B, G, v, ssc):
 
           denom = np.zeros(B)
