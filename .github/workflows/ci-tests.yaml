@@ -26,7 +26,7 @@ jobs:
         with:
           r-version: '4.2.0'
 
-      - name: install fixest and broom for testing
+      - name: install fwildclusterboot for testing
         run: Rscript -e 'install.packages("fwildclusterboot", repos="https://cloud.r-project.org")'
         shell: bash
 
