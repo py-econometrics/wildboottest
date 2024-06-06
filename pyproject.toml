@@ -22,7 +22,7 @@ repository="https://github.com/s3alfisc/wildboottest"
 
 
 [tool.poetry.dependencies]
-python=">=3.8,<4.0"
+python=">=3.8,<3.12"
 numba=">=0.57"
 numpy=">=1.18"
 pandas=">=1.4"
@@ -30,6 +30,7 @@ pytest="^7.2.0"
 statsmodels=">=0.13"
 tabulate = "^0.9.0"
 poetry = "^1.4.2"
+joblib = "^1.4.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.2.0"
@@ -48,6 +49,7 @@ pymdown-extensions = ">=10.0"
 mkdocstrings-python-legacy = "^0.2.3"
 mkdocstrings = {version = "^0.19.0", extras = ["python"], optional = true }
 pymdown-extensions = ">=10.0"
+ipykernel = "^6.29.4"
 
 
 [build-system]
