@@ -6,6 +6,12 @@ from wildboottest.weights import draw_weights
 import warnings
 from typing import Union, Tuple, Callable
 from numpy.random import Generator
+from statsmodels.regression.linear_model import OLS
+
+
+_allowed_models = (
+  OLS,
+)
 
 class WildDrawFunctionException(Exception):
     pass
@@ -649,7 +655,7 @@ class WildboottestCL:
       self.pvalue = np.mean(self.t_stat > self.t_boot)
 
 
-def wildboottest(model : 'OLS',
+def wildboottest(model : OLS,
                  B:int,
                  cluster : Union[np.ndarray, pd.Series, pd.DataFrame, None] = None,
                  param : Union[str, None] = None,
@@ -713,6 +719,9 @@ def wildboottest(model : 'OLS',
       >>> wildboottest(model, param = "X1", cluster = cluster, B = 9999)
       >>> wildboottest(model, cluster = cluster, B = 9999)
   """
+  
+  if not isinstance(model, _allowed_models):
+    raise NotImplementedError(f"Only allow models of type {' ,'.join([str(i) for i in _allowed_models])}")
 
   # does model.exog already exclude missing values?
   X = model.exog
